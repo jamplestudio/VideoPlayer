@@ -1,0 +1,17 @@
+{
+  "itemGroup.videoplayer.items": "Reproductor de video",
+
+  "gui.tv_video_screen.title": "Pantalla de video de TV",
+  "gui.tv_video_screen.save": "Guardar",
+
+  "item.videoplayer.tv_block": "TV",
+
+  "block.videoplayer.tv_block": "TV",
+  "gui.tv_video_screen.play": "Reproducir",
+  "gui.tv_video_screen.pause": "Pausar",
+  "gui.tv_video_screen.stop": "Detener",
+  "gui.tv_video_screen.url_text": "URL:",
+  "gui.tv_video_screen.volume": "Volumen",
+
+  "customslider.videoplayer.value": "%s: %d"
+}
