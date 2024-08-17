@@ -22,7 +22,7 @@ apply plugin: 'org.parchmentmc.librarian.forgegradle'
 apply plugin: 'maven-publish'
 apply plugin: 'org.spongepowered.mixin'
 
-version = '2.6-FORGE-1.16.5'
+version = '3.0-FORGE-1.16.5'
 group = 'com.github.NGoedix.WatchVideoMod' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'VideoPlayer'
 
@@ -42,9 +42,6 @@ minecraft {
                     source sourceSets.main
                 }
             }
-
-            arg '--mixin.config'
-            arg 'videoplayer.mixin.json'
         }
 
         server {
@@ -57,9 +54,6 @@ minecraft {
                     source sourceSets.main
                 }
             }
-
-            arg '--mixin.config'
-            arg 'videoplayer.mixin.json'
         }
     }
 }
@@ -82,35 +76,22 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.16.5-36.2.34'
 
     // API
-    implementation 'com.github.SrRapero720.watermedia:build:2.0.7'
+    implementation 'com.github.WaterMediaTeam.watermedia:build:2.0.69'
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..
 jar {
     manifest {
         attributes([
-            "Specification-Title": "watchvideomod",
-            "Specification-Vendor": "watchvideomodsareus",
-            "Specification-Version": "1", // We are version 1 of ourselves
+            "Specification-Title": "videoplayermod",
+            "Specification-Vendor": "goedix",
+            "Specification-Version": "1",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
-            "Implementation-Vendor" :"watchvideomodsareus",
+            "Implementation-Vendor" :"goedix",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
 }
 
 jar.finalizedBy('reobfJar')
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifact jar
-        }
-    }
-    repositories {
-        maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
-        }
-    }
-}

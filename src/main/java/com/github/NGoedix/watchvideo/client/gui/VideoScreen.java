@@ -2,14 +2,14 @@ package com.github.NGoedix.watchvideo.client.gui;
 
 import com.github.NGoedix.watchvideo.Reference;
 import com.github.NGoedix.watchvideo.VideoPlayer;
-import com.github.NGoedix.watchvideo.util.MemoryTracker;
+import com.github.NGoedix.watchvideo.util.math.VideoMathUtil;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import me.lib720.caprica.vlcj.player.base.State;
-import me.srrapero720.watermedia.api.WaterMediaAPI;
 import me.srrapero720.watermedia.api.image.ImageAPI;
 import me.srrapero720.watermedia.api.image.ImageRenderer;
+import me.srrapero720.watermedia.api.math.MathAPI;
 import me.srrapero720.watermedia.api.player.SyncVideoPlayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
@@ -32,23 +32,39 @@ public class VideoScreen extends Screen {
     }
 
     // STATUS
-    int tick = 0;
-    int closingOnTick = -1;
-    float fadeLevel = 0;
-    boolean started;
-    boolean closing = false;
-    boolean paused = false;
-    float volume;
-    boolean controlBlocked;
+    private int tick = 0;
+    private int closingOnTick = -1;
+    private float fadeLevel = 0;
+    private float fadeStep30 = 0;
+    private float fadeStep10 = 0;
+    private boolean started;
+    private boolean closing = false;
+    private boolean paused = false;
+    private float volume;
+
+    // CONTROL
+    private final boolean controlBlocked;
+    private final boolean canSkip;
+    private int optionInMode;
+    private int optionInSecs;
+    private int optionOutMode;
+    private int optionOutSecs;
 
     // TOOLS
     private final SyncVideoPlayer player;
 
     // VIDEO INFO
-    int videoTexture = -1;
+    private int videoTexture = -1;
 
+    public VideoScreen(String url, int volume, boolean controlBlocked, boolean canSkip, int optionInMode, int optionInSecs, int optionOutMode, int optionOutSecs) {
+        this(url, volume, controlBlocked, canSkip, optionInMode != -1 && optionInSecs > 0);
+        this.optionInMode = optionInMode;
+        this.optionInSecs = optionInSecs;
+        this.optionOutMode = optionOutMode;
+        this.optionOutSecs = optionOutSecs;
+    }
 
-    public VideoScreen(String url, int volume, boolean controlBlocked) {
+    public VideoScreen(String url, int volume, boolean controlBlocked, boolean canSkip, boolean fadeIn) {
         super(new StringTextComponent(""));
 
         Minecraft minecraft = Minecraft.getInstance();
@@ -56,13 +72,22 @@ public class VideoScreen extends Screen {
 
         this.volume = volume;
         this.controlBlocked = controlBlocked;
+        this.canSkip = canSkip;
+        this.optionInMode = -1;
+        this.optionInSecs = -1;
+        this.optionOutMode = -1;
+        this.optionOutSecs = -1;
 
-        this.player = new SyncVideoPlayer(null, minecraft, MemoryTracker::create);
+        this.player = new SyncVideoPlayer(null, minecraft);
         Reference.LOGGER.info("Playing video (" + (!controlBlocked ? "not" : "") + "blocked) (" + url + " with volume: " + (int) (Minecraft.getInstance().options.getSoundSourceVolume(SoundCategory.MASTER) * volume));
 
         player.setVolume((int) (Minecraft.getInstance().options.getSoundSourceVolume(SoundCategory.MASTER) * volume));
-        player.start(url);
-        started = true;
+        if (!fadeIn) {
+            started = true;
+            player.start(url);
+        } else {
+            player.startPaused(url);
+        }
     }
 
     @Override
@@ -73,24 +98,43 @@ public class VideoScreen extends Screen {
 
     @Override
     public void render(MatrixStack stack, int pMouseX, int pMouseY, float pPartialTicks) {
-        if (!started) return;
+        if (started && !closing) {
+            videoTexture = player.getGlTexture();
+        }
 
-        videoTexture = player.prepareTexture();
+        // Handle easing for fade-in
+        if ((tick < optionInSecs * 20 && optionInMode != -1) || !started) {
+            float t = tick / (float) (optionInSecs * 20);
+            fadeLevel = (float) applyEasing(optionInMode, 0, 1, t);
+            if (!started && fadeLevel >= 1.0) {
+                player.play();
+                started = true;
+                fadeLevel = 0;
+            }
+        }
 
-        if (player.isEnded() || player.isStopped() || player.getRawPlayerState().equals(State.ERROR)) {
-            if (fadeLevel == 1 || closing) {
+        // Handle easing for fade-out
+        if (closing || player.isEnded() || player.isStopped() || player.isBroken()) {
+            if (optionOutMode == -1) onClose();
+            if (optionInMode != -1 || closing) {
                 closing = true;
-                if (closingOnTick == -1) closingOnTick = tick + 20;
-                if (tick >= closingOnTick) fadeLevel = Math.max(fadeLevel - (pPartialTicks / 8), 0.0f);
+                if (closingOnTick == -1) closingOnTick = tick + optionOutSecs * 20;
+                float t = (tick - closingOnTick + optionOutSecs * 20) / (float)(optionOutSecs * 20);
+                fadeLevel = (float) applyEasing(optionOutMode, 1, 0, t);
                 renderBlackBackground(stack);
-                renderIcon(stack, ImageAPI.loadingGif());
                 if (fadeLevel == 0) onClose();
                 return;
             }
         }
 
+        // BLACK SCREEN
+        if (!paused)
+            renderBlackBackground(stack);
+
+        if (!started) return;
+
         boolean playingState = (player.isPlaying() || player.isPaused()) && (player.getRawPlayerState().equals(State.PLAYING) || player.getRawPlayerState().equals(State.PAUSED));
-        fadeLevel = (playingState) ? Math.max(fadeLevel - (pPartialTicks / 8), 0.0f) : Math.min(fadeLevel + (pPartialTicks / 16), 1.0f);
+//        fadeLevel = (playingState) ? Math.max(fadeLevel - (pPartialTicks / 8), 0.0f) : Math.min(fadeLevel + (pPartialTicks / 16), 1.0f);
 
         // RENDER VIDEO
         if (playingState || player.isStopped() || player.isEnded()) {
@@ -110,6 +154,9 @@ public class VideoScreen extends Screen {
             }
         }
 
+        renderStep10(stack, pPartialTicks);
+        renderStep30(stack, pPartialTicks);
+
         // DEBUG RENDERING
         if (!FMLLoader.isProduction()) {
             draw(stack, String.format("State: %s", player.getRawPlayerState().name()), getHeightCenter(-12));
@@ -120,7 +167,7 @@ public class VideoScreen extends Screen {
 
     private void renderBlackBackground(MatrixStack stack) {
         RenderSystem.enableBlend();
-        fill(stack, 0, 0, width, height, WaterMediaAPI.math_colorARGB((int) (fadeLevel * 255), 0, 0, 0));
+        fill(stack, 0, 0, width, height, MathAPI.argb((int) (fadeLevel * 255), 0, 0, 0));
         RenderSystem.disableBlend();
     }
 
@@ -128,7 +175,7 @@ public class VideoScreen extends Screen {
         if (player.getDimensions() == null) return; // Checking if video available
 
         RenderSystem.enableBlend();
-        fill(stack, 0, 0, width, height, WaterMediaAPI.math_colorARGB(255, 0, 0, 0));
+        fill(stack, 0, 0, width, height, MathAPI.argb(255, 0, 0, 0));
         RenderSystem.disableBlend();
 
         RenderSystem.bindTexture(texture);
@@ -173,6 +220,43 @@ public class VideoScreen extends Screen {
         RenderSystem.disableBlend();
     }
 
+    private void renderStep30(MatrixStack stack, float pPartialTicks) {
+        if (fadeStep30 == 0) return;
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.bindTexture(VideoPlayer.step30Image().texture(tick, 1, true));
+        float alpha = fadeStep30;
+        RenderSystem.color4f(1.0f, 1.0f, 1.0f, alpha);
+        AbstractGui.blit(stack, width / 2 + 70, height / 2 - 32, 0, 0, 64, 64, 64, 64);
+        fadeStep30 = Math.max(fadeStep30 - (pPartialTicks / 8), 0.0f);
+        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+        RenderSystem.disableBlend();
+    }
+
+    private void renderStep10(MatrixStack stack, float pPartialTicks) {
+        if (fadeStep10 == 0) return;
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.bindTexture(VideoPlayer.step10Image().texture(tick, 1, true));
+        float alpha = fadeStep10;
+        RenderSystem.color4f(1.0f, 1.0f, 1.0f, alpha);
+        AbstractGui.blit(stack, width / 2 - 134, height / 2 - 32, 0, 0, 64, 64, 64, 64);
+        fadeStep10 = Math.max(fadeStep10 - (pPartialTicks / 8), 0.0f);
+        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+        RenderSystem.disableBlend();
+    }
+
+    private double applyEasing(int mode, double start, double end, double t) {
+        switch (mode) {
+            case 0:
+                return VideoMathUtil.easeIn(start, end, t);
+            case 1:
+                return VideoMathUtil.easeOut(start, end, t);
+            default:
+                return end;
+        }
+    }
+
     private int getHeightCenter(int offset) {
         return (height / 2) + offset;
     }
@@ -187,7 +271,7 @@ public class VideoScreen extends Screen {
     @Override
     public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
         // Shift + ESC (Exit)
-        if (hasShiftDown() && pKeyCode == 256) {
+        if (canSkip && hasShiftDown() && pKeyCode == 256) {
             this.onClose();
         }
 
@@ -238,11 +322,13 @@ public class VideoScreen extends Screen {
         // Shift + Right arrow key (Forwards)
         if (hasShiftDown() && pKeyCode == 262) {
             player.seekTo(player.getTime() + 30000);
+            fadeStep30 = 1;
         }
 
         // Shift + Left arrow key (Backwards)
         if (hasShiftDown() && pKeyCode == 263) {
             player.seekTo(player.getTime() - 10000);
+            fadeStep10 = 1;
         }
 
         // Shift + Space (Pause / Play)

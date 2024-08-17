@@ -3,7 +3,7 @@ package com.github.NGoedix.watchvideo.util.cache;
 import com.github.NGoedix.watchvideo.util.displayers.IDisplay;
 import com.github.NGoedix.watchvideo.util.displayers.ImageDisplayer;
 import com.github.NGoedix.watchvideo.util.displayers.VideoDisplayer;
-import com.github.NGoedix.watchvideo.util.math.Vec3d;
+import com.github.NGoedix.watchvideo.util.math.geo.Vec3d;
 import me.srrapero720.watermedia.api.image.ImageFetch;
 import me.srrapero720.watermedia.api.image.ImageRenderer;
 import net.minecraft.client.Minecraft;
@@ -42,6 +42,10 @@ public class TextureCache {
         return cache;
     }
 
+    public ImageRenderer getPicture() {
+        return picture;
+    }
+
     private synchronized void attemptToLoad() {
         if (this.seeker != null) return;
         if (!this.url.isEmpty()) {
@@ -50,13 +54,9 @@ public class TextureCache {
         }
     }
 
-    public IDisplay createDisplay(Vec3d pos, String url, float volume, float minDistance, float maxDistance, boolean loop, boolean playing) {
-        return createDisplay(pos, url, volume, minDistance, maxDistance, loop, playing, false);
-    }
-
-    public IDisplay createDisplay(Vec3d pos, String url, float volume, float minDistance, float maxDistance, boolean loop, boolean playing, boolean noVideo) {
+    public IDisplay createDisplay(Vec3d pos, String url, float volume, float minDistance, float maxDistance, boolean loop, boolean playing, boolean isOnlyMusic) {
         volume *= Minecraft.getInstance().options.getSoundSourceVolume(SoundCategory.MASTER);
-        if (picture == null && !noVideo) return VideoDisplayer.createVideoDisplay(pos, url, volume, minDistance, maxDistance, loop, playing);
+        if (picture == null) return VideoDisplayer.createVideoDisplay(pos, url, volume, minDistance, maxDistance, loop, playing, isOnlyMusic);
 
         return new ImageDisplayer(picture) {
             @Override

@@ -2,18 +2,17 @@ package com.github.NGoedix.watchvideo.block.custom;
 
 import com.github.NGoedix.watchvideo.block.entity.ModBlockEntities;
 import com.github.NGoedix.watchvideo.block.entity.custom.TVBlockEntity;
-import com.github.NGoedix.watchvideo.util.math.AlignedBox;
-import com.github.NGoedix.watchvideo.util.math.Facing;
+import com.github.NGoedix.watchvideo.util.math.geo.AlignedBox;
+import com.github.NGoedix.watchvideo.util.math.geo.Facing;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.HorizontalBlock;
 import net.minecraft.block.RedstoneTorchBlock;
+import net.minecraft.block.material.PushReaction;
 import net.minecraft.entity.EntitySpawnPlacementRegistry;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemStack;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.DirectionProperty;
 import net.minecraft.state.StateContainer;
@@ -24,13 +23,9 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.ToolType;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class TVBlock extends Block {
@@ -47,18 +42,8 @@ public class TVBlock extends Block {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, @Nonnull IBlockReader worldIn, @Nonnull BlockPos pos, @Nonnull ISelectionContext context) {
         return state.getValue(FACING).getAxis() == Direction.Axis.X ? SHAPE_EAST_WEST : SHAPE_NORTH_SOUTH;
-    }
-
-    @Override
-    public void setPlacedBy(World world, BlockPos pPos, BlockState pState, @Nullable LivingEntity pPlacer, ItemStack pStack) {
-        TileEntity blockEntity = world.getBlockEntity(pPos);
-        if (blockEntity instanceof TVBlockEntity) {
-            blockEntity.setChanged();
-            world.setBlockEntity(pPos, blockEntity);
-            ((TVBlockEntity) blockEntity).reset();
-        }
     }
 
     @Nullable
@@ -70,11 +55,6 @@ public class TVBlock extends Block {
     @Override
     public BlockState rotate(BlockState state, Rotation rot) {
         return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
-    }
-
-    @Override
-    public BlockState mirror(BlockState state, Mirror mirrorIn) {
-        return super.mirror(state, mirrorIn);
     }
 
     @Override
@@ -101,6 +81,11 @@ public class TVBlock extends Block {
     }
 
     @Override
+    public PushReaction getPistonPushReaction(BlockState pState) {
+        return PushReaction.DESTROY;
+    }
+
+    @Override
     public boolean hasTileEntity(BlockState state) {
         return true;
     }
@@ -110,7 +95,6 @@ public class TVBlock extends Block {
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
         return ModBlockEntities.TV_BLOCK_ENTITY.get().create();
     }
-
 
     public static AlignedBox box(Direction direction) {
         Facing facing = Facing.get(direction);

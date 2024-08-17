@@ -14,20 +14,21 @@ public class UploadVideoUpdateMessage implements IMessage<UploadVideoUpdateMessa
     private BlockPos blockPos;
     private String url;
     private int volume;
-    private boolean loop;
+    private int tick;
     private boolean isPlaying;
-    private boolean reset;
-
+    private boolean stopped;
+    private boolean exit;
 
     public UploadVideoUpdateMessage() {}
 
-    public UploadVideoUpdateMessage(BlockPos blockPos, String url, int volume, boolean loop, boolean isPlaying, boolean reset) {
+    public UploadVideoUpdateMessage(BlockPos blockPos, String url, int volume, int tick, boolean isPlaying, boolean stopped, boolean exit) {
         this.blockPos = blockPos;
         this.url = url;
         this.volume = volume;
-        this.loop = loop;
+        this.tick = tick;
         this.isPlaying = isPlaying;
-        this.reset = reset;
+        this.stopped = stopped;
+        this.exit = exit;
     }
 
     @Override
@@ -35,14 +36,15 @@ public class UploadVideoUpdateMessage implements IMessage<UploadVideoUpdateMessa
         buffer.writeBlockPos(message.blockPos);
         buffer.writeUtf(message.url);
         buffer.writeInt(message.volume);
-        buffer.writeBoolean(message.loop);
+        buffer.writeInt(message.tick);
         buffer.writeBoolean(message.isPlaying);
-        buffer.writeBoolean(message.reset);
+        buffer.writeBoolean(message.stopped);
+        buffer.writeBoolean(message.exit);
     }
 
     @Override
     public UploadVideoUpdateMessage decode(PacketBuffer buffer) {
-        return new UploadVideoUpdateMessage(buffer.readBlockPos(), buffer.readUtf(), buffer.readInt(), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean());
+        return new UploadVideoUpdateMessage(buffer.readBlockPos(), buffer.readUtf(), buffer.readInt(), buffer.readInt(), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean());
     }
 
     @Override
@@ -54,19 +56,22 @@ public class UploadVideoUpdateMessage implements IMessage<UploadVideoUpdateMessa
                 TVBlockEntity tvBlockEntity = (TVBlockEntity) player.level.getBlockEntity(message.blockPos);
                 if (tvBlockEntity == null) return;
 
-                tvBlockEntity.setBeingUsed(new UUID(0, 0));
-                if (message.volume == -1) // NO UPDATE
-                    return;
+                if (message.exit)
+                    tvBlockEntity.setBeingUsed(new UUID(0, 0));
+                else {
+                    tvBlockEntity.setUrl(message.url);
+                    tvBlockEntity.setVolume(message.volume);
 
-                tvBlockEntity.setUrl(message.url);
-                tvBlockEntity.setVolume(message.volume);
-                tvBlockEntity.setLoop(message.loop);
-                tvBlockEntity.setPlaying(message.isPlaying);
-                tvBlockEntity.notifyPlayer();
+                    if (message.tick != -1)
+                        tvBlockEntity.setTick(message.tick);
 
-                if (message.reset)
-                    tvBlockEntity.setTick(0);
-            }
+                    tvBlockEntity.setPlaying(message.isPlaying);
+
+                    if (message.stopped)
+                        tvBlockEntity.stop();
+
+                    tvBlockEntity.notifyPlayer();
+                }}
         });
     }
 }

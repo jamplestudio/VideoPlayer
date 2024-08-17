@@ -2,22 +2,27 @@ package com.github.NGoedix.watchvideo;
 
 import com.github.NGoedix.watchvideo.block.ModBlocks;
 import com.github.NGoedix.watchvideo.block.entity.ModBlockEntities;
+import com.github.NGoedix.watchvideo.client.gui.OverlayVideo;
 import com.github.NGoedix.watchvideo.client.render.TVBlockRenderer;
 import com.github.NGoedix.watchvideo.commands.RegisterCommands;
 import com.github.NGoedix.watchvideo.commands.arguments.SymbolStringArgumentSerializer;
 import com.github.NGoedix.watchvideo.commands.arguments.SymbolStringArgumentType;
 import com.github.NGoedix.watchvideo.common.CommonHandler;
+import com.github.NGoedix.watchvideo.container.ModContainerTypes;
 import com.github.NGoedix.watchvideo.item.ModItems;
+import com.github.NGoedix.watchvideo.util.RadioStreams;
 import com.github.NGoedix.watchvideo.util.cache.TextureCache;
 import com.github.NGoedix.watchvideo.util.displayers.VideoDisplayer;
 import me.srrapero720.watermedia.api.image.ImageAPI;
 import me.srrapero720.watermedia.api.image.ImageRenderer;
 import me.srrapero720.watermedia.core.tools.JarTool;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.command.arguments.ArgumentTypes;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.world.WorldEvent;
@@ -35,10 +40,25 @@ public class VideoPlayer
 {
 
     @OnlyIn(Dist.CLIENT)
+    private static final OverlayVideo gui = new OverlayVideo();
+
+    @OnlyIn(Dist.CLIENT)
     private static ImageRenderer IMG_PAUSED;
 
     @OnlyIn(Dist.CLIENT)
+    private static ImageRenderer IMG_STEP30;
+
+    @OnlyIn(Dist.CLIENT)
+    private static ImageRenderer IMG_STEP10;
+
+    @OnlyIn(Dist.CLIENT)
     public static ImageRenderer pausedImage() { return IMG_PAUSED; }
+
+    @OnlyIn(Dist.CLIENT)
+    public static ImageRenderer step30Image() { return IMG_STEP30; }
+
+    @OnlyIn(Dist.CLIENT)
+    public static ImageRenderer step10Image() { return IMG_STEP10; }
 
     public VideoPlayer() {
         // Register the setup method for modloading
@@ -47,6 +67,7 @@ public class VideoPlayer
         ModBlocks.register(event);
         ModBlockEntities.register(event);
         ModItems.register(event);
+        ModContainerTypes.register(event);
 
         event.addListener(this::setup);
         event.addListener(this::onClientSetup);
@@ -63,10 +84,22 @@ public class VideoPlayer
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
+        RadioStreams.prepareRadios();
+
         RenderTypeLookup.setRenderLayer(ModBlocks.TV_BLOCK.get(), RenderType.cutout());
         ClientRegistry.bindTileEntityRenderer(ModBlockEntities.TV_BLOCK_ENTITY.get(), TVBlockRenderer::new);
 
-        IMG_PAUSED = ImageAPI.renderer(JarTool.readImage(VideoPlayer.class.getClassLoader(), "/pictures/paused.png"), true);
+        IMG_PAUSED = ImageAPI.renderer(JarTool.readImage("/pictures/paused.png"), true);
+        IMG_STEP30 = ImageAPI.renderer(JarTool.readImage("/pictures/step30.png"), true);
+        IMG_STEP10 = ImageAPI.renderer(JarTool.readImage("/pictures/step10.png"), true);
+    }
+
+    @SubscribeEvent
+    @OnlyIn(Dist.CLIENT)
+    public void onRenderGameOverlay(RenderGameOverlayEvent.Post event) {
+        if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
+            gui.renderOverlay(event.getMatrixStack());
+        }
     }
 
     @Mod.EventBusSubscriber(modid = Reference.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
