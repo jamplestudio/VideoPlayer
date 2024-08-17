@@ -73,7 +73,7 @@ public class TVBlockEntity extends VideoPlayerBlockEntity {
 
     public void notifyPlayer() {
         if (this.level == null) return;
-        PacketHandler.sendToClient(new FrameVideoMessage(worldPosition, isPlaying(), getTick()), level, worldPosition);
+        PacketHandler.sendToClient(new FrameVideoMessage(getUrl(), worldPosition, isPlaying(), getTick()), level, worldPosition);
     }
 
     public float getSizeX() {

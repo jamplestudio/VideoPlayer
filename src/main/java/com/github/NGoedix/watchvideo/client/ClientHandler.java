@@ -115,10 +115,11 @@ public class ClientHandler {
         }
     }
 
-    public static void manageRadio(BlockPos pos, boolean playing) {
+    public static void manageRadio(String url, BlockPos pos, boolean playing) {
         TileEntity be = Minecraft.getInstance().level.getBlockEntity(pos);
         if (be instanceof RadioBlockEntity) {
             RadioBlockEntity tv = (RadioBlockEntity) be;
+            tv.setUrl(url);
             tv.setPlaying(playing);
 
             tv.notifyPlayer();
@@ -126,16 +127,18 @@ public class ClientHandler {
 
         if (be instanceof HandRadioBlockEntity) {
             HandRadioBlockEntity tv = (HandRadioBlockEntity) be;
+            tv.setUrl(url);
             tv.setPlaying(playing);
 
             tv.notifyPlayer();
         }
     }
 
-    public static void manageVideo(BlockPos pos, boolean playing, int tick) {
+    public static void manageVideo(String url, BlockPos pos, boolean playing, int tick) {
         TileEntity be = Minecraft.getInstance().level.getBlockEntity(pos);
         if (be instanceof TVBlockEntity) {
             TVBlockEntity tv = (TVBlockEntity) be;
+            tv.setUrl(url);
             tv.setPlaying(playing);
             if (tv.getTick() - 40 > tick || tv.getTick() + 40 < tick)
                 tv.setTick(tick);

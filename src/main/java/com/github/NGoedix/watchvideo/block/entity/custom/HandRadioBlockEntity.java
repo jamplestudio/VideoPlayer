@@ -67,6 +67,6 @@ public class HandRadioBlockEntity extends VideoPlayerBlockEntity {
 
     public void notifyPlayer() {
         if (this.level == null) return;
-        PacketHandler.sendToClient(new RadioMessage(worldPosition, isPlaying()), level, worldPosition);
+        PacketHandler.sendToClient(new RadioMessage(getUrl(), worldPosition, isPlaying()), level, worldPosition);
     }
 }

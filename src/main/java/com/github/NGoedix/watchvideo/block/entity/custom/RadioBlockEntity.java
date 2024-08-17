@@ -70,7 +70,7 @@ public class RadioBlockEntity extends VideoPlayerBlockEntity {
     public void notifyPlayer() {
         if (this.level == null) return;
         if (!this.level.isClientSide)
-            PacketHandler.sendToClient(new RadioMessage(worldPosition, isPlaying()), level, worldPosition);
+            PacketHandler.sendToClient(new RadioMessage(getUrl(), worldPosition, isPlaying()), level, worldPosition);
     }
 
     @Override
