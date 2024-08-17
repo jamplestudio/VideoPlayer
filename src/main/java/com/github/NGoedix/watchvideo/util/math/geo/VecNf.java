@@ -1,12 +1,16 @@
-package com.github.NGoedix.watchvideo.util.math;
+package com.github.NGoedix.watchvideo.util.math.geo;
 
-public abstract class VecNd<T extends VecNd> {
-    public VecNd() {
+public abstract class VecNf<T extends VecNf> {
+    public VecNf() {
     }
 
     public abstract void set(T var1);
 
-    public abstract double get(int var1);
+    public float get(Axis axis) {
+        return this.get(axis.ordinal());
+    }
+
+    public abstract float get(int var1);
 
     public abstract int dimensions();
 

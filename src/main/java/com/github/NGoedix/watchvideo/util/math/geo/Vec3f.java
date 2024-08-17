@@ -1,4 +1,4 @@
-package com.github.NGoedix.watchvideo.util.math;
+package com.github.NGoedix.watchvideo.util.math.geo;
 
 public class Vec3f extends VecNf<Vec3f> {
     public float x;

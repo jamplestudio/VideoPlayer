@@ -1,4 +1,4 @@
-package com.github.NGoedix.watchvideo.util.math;
+package com.github.NGoedix.watchvideo.util.math.geo;
 
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.phys.Vec3;
