@@ -1,0 +1,17 @@
+{
+  "itemGroup.videoplayer.items": "Video Player",
+
+  "gui.tv_video_screen.title": "電視 影片 畫面",
+  "gui.tv_video_screen.save": "儲存",
+
+  "item.videoplayer.tv_block": "電視",
+
+  "block.videoplayer.tv_block": "電視",
+  "gui.tv_video_screen.play": "播放",
+  "gui.tv_video_screen.pause": "暫停",
+  "gui.tv_video_screen.stop": "停止",
+  "gui.tv_video_screen.url_text": "網址：",
+  "gui.tv_video_screen.volume": "音量",
+
+  "customslider.videoplayer.value": "%s： %d"
+}
