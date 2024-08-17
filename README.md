@@ -28,6 +28,9 @@ To play a video for players on your server, use the following command:
 ```plaintext
 /playvideo <TARGETS/PLAYER> <VOLUME> <URL> [<control_blocked>]
 ```
+```plaintext
+/playgovideo <TARGETS/PLAYER> <VOLUME> <URL> <MODE> [<control_blocked>] [<can_skip>] [ONLY IN MODE 1 -> <position>] [<option_mode _in option_secs_in option_mode_out option_secs_out>]
+```
 This command plays the "Big Buck Bunny" video for all players at 50% volume with controls disabled.
 
 ## Controls
