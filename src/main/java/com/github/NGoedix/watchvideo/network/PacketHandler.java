@@ -30,9 +30,14 @@ public class PacketHandler {
                 .serverAcceptedVersions(PROTOCOL_VERSION::equals)
                 .simpleChannel();
         register(SendVideoMessage.class, new SendVideoMessage());
+        register(SendCustomVideoMessage.class, new SendCustomVideoMessage());
+        register(SendMusicMessage.class, new SendMusicMessage());
         register(FrameVideoMessage.class, new FrameVideoMessage());
+        register(RadioMessage.class, new RadioMessage());
         register(OpenVideoManagerScreen.class, new OpenVideoManagerScreen());
         register(UploadVideoUpdateMessage.class, new UploadVideoUpdateMessage());
+        register(UploadRadioUpdateMessage.class, new UploadRadioUpdateMessage());
+        register(OpenRadioManagerScreen.class, new OpenRadioManagerScreen());
     }
 
     private static <T> void register(Class<T> clazz, IMessage<T> message) {

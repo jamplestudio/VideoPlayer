@@ -11,27 +11,27 @@ public class OpenVideoManagerScreen implements IMessage<OpenVideoManagerScreen> 
 
     private BlockPos blockPos;
     private String url;
-    private int tick;
     private int volume;
-    private boolean loop;
+    private int tick;
+    private boolean isPlaying;
 
     public OpenVideoManagerScreen() {}
 
-    public OpenVideoManagerScreen(BlockPos blockPos, String url, int tick, int volume, boolean loop) {
+    public OpenVideoManagerScreen(BlockPos blockPos, String url, int volume, int tick, boolean isPlaying) {
         this.blockPos = blockPos;
         this.url = url;
-        this.tick = tick;
         this.volume = volume;
-        this.loop = loop;
+        this.tick = tick;
+        this.isPlaying = isPlaying;
     }
 
     @Override
     public void encode(OpenVideoManagerScreen message, FriendlyByteBuf buffer) {
         buffer.writeBlockPos(message.blockPos);
         buffer.writeUtf(message.url);
-        buffer.writeInt(message.tick);
         buffer.writeInt(message.volume);
-        buffer.writeBoolean(message.loop);
+        buffer.writeInt(message.tick);
+        buffer.writeBoolean(message.isPlaying);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class OpenVideoManagerScreen implements IMessage<OpenVideoManagerScreen> 
     @Override
     public void handle(OpenVideoManagerScreen message, Supplier<NetworkEvent.Context> supplier) {
         supplier.get().enqueueWork(() -> {
-            ClientHandler.openVideoGUI(message.blockPos, message.url, message.tick, message.volume, message.loop);
+            ClientHandler.openVideoGUI(message.blockPos, message.url, message.volume, message.tick, message.isPlaying);
         });
     }
 }
