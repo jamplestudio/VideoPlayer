@@ -2,12 +2,14 @@ package com.github.NGoedix.watchvideo;
 
 import com.github.NGoedix.watchvideo.block.ModBlocks;
 import com.github.NGoedix.watchvideo.block.entity.ModBlockEntities;
+import com.github.NGoedix.watchvideo.client.gui.OverlayVideo;
 import com.github.NGoedix.watchvideo.client.render.TVBlockRenderer;
 import com.github.NGoedix.watchvideo.commands.RegisterCommands;
 import com.github.NGoedix.watchvideo.commands.arguments.SymbolStringArgumentSerializer;
 import com.github.NGoedix.watchvideo.commands.arguments.SymbolStringArgumentType;
 import com.github.NGoedix.watchvideo.common.CommonHandler;
 import com.github.NGoedix.watchvideo.item.ModItems;
+import com.github.NGoedix.watchvideo.util.RadioStreams;
 import com.github.NGoedix.watchvideo.util.cache.TextureCache;
 import com.github.NGoedix.watchvideo.util.displayers.VideoDisplayer;
 import com.mojang.logging.LogUtils;
@@ -42,10 +44,25 @@ public class VideoPlayer
 {
 
     @OnlyIn(Dist.CLIENT)
+    private static final OverlayVideo gui = new OverlayVideo();
+
+    @OnlyIn(Dist.CLIENT)
     private static ImageRenderer IMG_PAUSED;
 
     @OnlyIn(Dist.CLIENT)
+    private static ImageRenderer IMG_STEP30;
+
+    @OnlyIn(Dist.CLIENT)
+    private static ImageRenderer IMG_STEP10;
+
+    @OnlyIn(Dist.CLIENT)
     public static ImageRenderer pausedImage() { return IMG_PAUSED; }
+
+    @OnlyIn(Dist.CLIENT)
+    public static ImageRenderer step30Image() { return IMG_STEP30; }
+
+    @OnlyIn(Dist.CLIENT)
+    public static ImageRenderer step10Image() { return IMG_STEP10; }
 
     public static CreativeModeTab videoPlayerTab;
     private static final ResourceLocation VIDEO_PLAYER_TAB_ID = new ResourceLocation(Reference.MOD_ID, "video_player_tab");
@@ -57,10 +74,9 @@ public class VideoPlayer
 
         MinecraftForge.EVENT_BUS.register(RegisterCommands.class);
 
-        // Register the commonSetup method for modloading
         ModBlocks.register(eventBus);
-        ModItems.register(eventBus);
         ModBlockEntities.register(eventBus);
+        ModItems.register(eventBus);
 
         eventBus.addListener(this::onCommonSetup);
         eventBus.addListener(this::onClientSetup);
@@ -78,6 +94,8 @@ public class VideoPlayer
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
+        RadioStreams.prepareRadios();
+
         ItemBlockRenderTypes.setRenderLayer(ModBlocks.TV_BLOCK.get(), RenderType.cutout());
         BlockEntityRenderers.register(ModBlockEntities.TV_BLOCK_ENTITY.get(), TVBlockRenderer::new);
 
@@ -86,7 +104,9 @@ public class VideoPlayer
 
     @OnlyIn(Dist.CLIENT)
     private void loadImages() {
-        IMG_PAUSED = ImageAPI.renderer(JarTool.readImage(VideoPlayer.class.getClassLoader(), "/pictures/paused.png"), true);
+        IMG_PAUSED = ImageAPI.renderer(JarTool.readImage("/pictures/paused.png"), true);
+        IMG_STEP30 = ImageAPI.renderer(JarTool.readImage("/pictures/step30.png"), true);
+        IMG_STEP10 = ImageAPI.renderer(JarTool.readImage("/pictures/step10.png"), true);
     }
 
     private void onCreativeTabRegistration(CreativeModeTabEvent.Register event) {
@@ -97,6 +117,7 @@ public class VideoPlayer
     private void addCreative(CreativeModeTabEvent.BuildContents event) {
         Reference.LOGGER.info("Adding items to creative tab...");
         event.accept(ModBlocks.TV_BLOCK);
+        event.accept(ModBlocks.RADIO_BLOCK);
     }
 
     @Mod.EventBusSubscriber(modid = Reference.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)

@@ -2,6 +2,8 @@ package com.github.NGoedix.watchvideo.block;
 
 import com.github.NGoedix.watchvideo.Reference;
 import com.github.NGoedix.watchvideo.VideoPlayer;
+import com.github.NGoedix.watchvideo.block.custom.HandRadioBlock;
+import com.github.NGoedix.watchvideo.block.custom.RadioBlock;
 import com.github.NGoedix.watchvideo.block.custom.TVBlock;
 import com.github.NGoedix.watchvideo.item.ModItems;
 import net.minecraft.world.item.BlockItem;
@@ -27,6 +29,13 @@ public class ModBlocks {
     public static final RegistryObject<Block> TV_BLOCK = registerBlock("tv_block",
             () -> new TVBlock(BlockBehaviour.Properties.of(Material.HEAVY_METAL).noOcclusion().requiresCorrectToolForDrops().sound(SoundType.METAL).lightLevel(litBlockEmission(12)).strength(3.5F, 6.0F)));
 
+    public static final RegistryObject<Block> RADIO_BLOCK = registerBlock("radio_block",
+            () -> new RadioBlock(BlockBehaviour.Properties.of(Material.METAL).noOcclusion().requiresCorrectToolForDrops().sound(SoundType.METAL).strength(3.5f, 6.0f)));
+
+    public static final RegistryObject<Block> HAND_RADIO_BLOCK = registerBlockWithoutBlockItem("hand_radio_block",
+            () -> new HandRadioBlock(BlockBehaviour.Properties.of(Material.METAL).noOcclusion().requiresCorrectToolForDrops().sound(SoundType.METAL).strength(3.5f, 6.0f)));
+
+
     private static ToIntFunction<BlockState> litBlockEmission(int pLightValue) {
         return (blockstate) -> blockstate.getValue(BlockStateProperties.LIT) ? pLightValue : 0;
     }
@@ -34,6 +43,10 @@ public class ModBlocks {
     private static <T extends Block> RegistryObject<Item> registerBlockItem(String name, RegistryObject<T> block) {
         return ModItems.ITEMS.register(name, () -> new BlockItem(block.get(),
                 new Item.Properties()));
+    }
+
+    private static <T extends Block> RegistryObject<T> registerBlockWithoutBlockItem(String name, Supplier<T> block) {
+        return BLOCKS.register(name, block);
     }
 
     private static <T extends Block> RegistryObject<T> registerBlock(String name, Supplier<T> block) {

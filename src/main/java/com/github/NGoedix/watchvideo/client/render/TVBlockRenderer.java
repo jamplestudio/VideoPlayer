@@ -3,12 +3,11 @@ package com.github.NGoedix.watchvideo.client.render;
 import com.github.NGoedix.watchvideo.block.custom.TVBlock;
 import com.github.NGoedix.watchvideo.block.entity.custom.TVBlockEntity;
 import com.github.NGoedix.watchvideo.util.displayers.IDisplay;
-import com.github.NGoedix.watchvideo.util.math.*;
+import com.github.NGoedix.watchvideo.util.math.geo.*;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import me.srrapero720.watermedia.api.image.ImageAPI;
-import me.srrapero720.watermedia.api.image.ImageRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -16,7 +15,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3f;
@@ -24,20 +22,10 @@ import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 public class TVBlockRenderer implements BlockEntityRenderer<TVBlockEntity> {
 
-    private static BufferedImage blackTextureBuffer = null;
-    private static ImageRenderer blackTexture = null;
-
-    public TVBlockRenderer(BlockEntityRendererProvider.Context dispatcher) {
-        if (blackTextureBuffer == null) {
-            blackTextureBuffer = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-            blackTextureBuffer.setRGB(0, 0, Color.BLACK.getRGB());
-            blackTexture = ImageAPI.renderer(blackTextureBuffer);
-        }
-    }
+    public TVBlockRenderer(BlockEntityRendererProvider.Context dispatcher) {}
 
     @Override
     public boolean shouldRenderOffScreen(TVBlockEntity frame) {
@@ -63,13 +51,11 @@ public class TVBlockRenderer implements BlockEntityRenderer<TVBlockEntity> {
             return;
         }
 
-        int texture = display.prepare(frame.getUrl(), frame.getVolume() * Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MASTER), frame.minDistance, frame.maxDistance, frame.isPlaying(), frame.isLoop(), frame.getTick());
+        int texture = display.prepare(frame.getUrl(), frame.isPlaying(), true, frame.getTick());
 
-        if (texture == -1) {
-            return;
-        }
+        if (texture == -1) return;
 
-        renderTexture(frame, display, blackTexture.texture(1, 1, false), pose, false);
+        renderTexture(frame, display, ImageAPI.blackPicture().texture(1, 1, false), pose, false);
         renderTexture(frame, display, texture, pose, true);
     }
 
@@ -158,22 +144,22 @@ public class TVBlockRenderer implements BlockEntityRenderer<TVBlockEntity> {
         pose.pushPose();
 
         if (d == Direction.NORTH) {
-            pose.translate(-0.185, 0, 0);
+            pose.translate(-0.200, 0, 0);
         }
 
         if (d == Direction.SOUTH) {
-            pose.translate(-0.185, 0, 0);
+            pose.translate(-0.191, 0, 0);
         }
 
         if (d == Direction.WEST) {
-            pose.translate(0, 0, -0.185);
+            pose.translate(0, 0, -0.200);
         }
 
         if (d == Direction.EAST) {
-            pose.translate(0, 0, -0.185);
+            pose.translate(0, 0, -0.200);
         }
 
-        pose.translate(0.5, 0.5646, 0.5);
+        pose.translate(0.5, 0.5356, 0.5);
         pose.mulPose(facing.rotation().rotation((float) Math.toRadians(0)));
         pose.translate(-0.5, -0.5, -0.5);
 
@@ -190,7 +176,6 @@ public class TVBlockRenderer implements BlockEntityRenderer<TVBlockEntity> {
                     .normal(mat3f, normal.getX(), normal.getY(), normal.getZ()).endVertex();
         tesselator.end();
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
         pose.popPose();
 
         // Reset OpenGL state
