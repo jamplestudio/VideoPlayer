@@ -5,3 +5,6 @@
 - Refactored the complete mod
 - Added radio block
 - Added new custom command to play videos (playgovideo)
+- Added command to play music (playmusic)
+- Added command to stop music (stopmusic)
+- Added command to stop video (stopvideo)
