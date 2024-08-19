@@ -1,17 +1,25 @@
 {
   "itemGroup.videoplayer.items": "Video Player",
 
-  "gui.tv_video_screen.title": "電視 影片 畫面",
+  "gui.tv_video_screen.title": "電視畫面",
   "gui.tv_video_screen.save": "儲存",
 
+  "gui.radio_screen.title": "收音機",
+
   "item.videoplayer.tv_block": "電視",
+  "item.videoplayer.radio_block": "收音機",
+  "item.videoplayer.hand_radio_block": "手持式收音機",
 
   "block.videoplayer.tv_block": "電視",
+  "block.videoplayer.radio_block": "收音機",
+  "block.videoplayer.hand_radio_block": "手持式收音機",
+
   "gui.tv_video_screen.play": "播放",
   "gui.tv_video_screen.pause": "暫停",
   "gui.tv_video_screen.stop": "停止",
   "gui.tv_video_screen.url_text": "網址：",
   "gui.tv_video_screen.volume": "音量",
+  "gui.tv_video_screen.time": "時間： %s / %s",
 
-  "customslider.videoplayer.value": "%s： %d"
+  "customslider.videoplayer.value": "%s： %d%%"
 }
