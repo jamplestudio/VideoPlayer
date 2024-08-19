@@ -1,8 +1,9 @@
 package com.github.NGoedix.watchvideo.block.custom;
 
 import com.github.NGoedix.watchvideo.block.entity.custom.TVBlockEntity;
-import com.github.NGoedix.watchvideo.util.math.AlignedBox;
-import com.github.NGoedix.watchvideo.util.math.Facing;
+import com.github.NGoedix.watchvideo.block.entity.custom.VideoPlayerBlockEntity;
+import com.github.NGoedix.watchvideo.util.math.geo.AlignedBox;
+import com.github.NGoedix.watchvideo.util.math.geo.Facing;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -21,14 +22,12 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 
 public class TVBlock extends Block implements EntityBlock {
@@ -50,15 +49,6 @@ public class TVBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
-        BlockEntity blockEntity = world.getBlockEntity(pos);
-        if (blockEntity instanceof TVBlockEntity) {
-            blockEntity.setChanged();
-            world.setBlockEntity(blockEntity);
-        }
-    }
-
-    @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.getStateDefinition().any().setValue(LIT, false).setValue(FACING, context.getHorizontalDirection() == Direction.WEST ? Direction.EAST : (context.getHorizontalDirection() == Direction.EAST ? Direction.WEST : context.getHorizontalDirection()));
     }
@@ -66,11 +56,6 @@ public class TVBlock extends Block implements EntityBlock {
     @Override
     public BlockState rotate(BlockState state, Rotation rot) {
         return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
-    }
-
-    @Override
-    public BlockState mirror(BlockState state, Mirror mirrorIn) {
-        return super.mirror(state, mirrorIn);
     }
 
     @Override
@@ -100,10 +85,15 @@ public class TVBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
+    @Override
+    public PushReaction getPistonPushReaction(BlockState pState) {
+        return PushReaction.DESTROY;
+    }
+
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
-        return TVBlockEntity::tick;
+        return VideoPlayerBlockEntity::tick;
     }
 
     @Nullable

@@ -1,4 +1,4 @@
-package com.github.NGoedix.watchvideo.util.math;
+package com.github.NGoedix.watchvideo.util.math.geo;
 
 public enum BoxFace {
     EAST(Facing.EAST, new BoxCorner[]{BoxCorner.EUS, BoxCorner.EDS, BoxCorner.EDN, BoxCorner.EUN}, Facing.NORTH, Facing.DOWN),
