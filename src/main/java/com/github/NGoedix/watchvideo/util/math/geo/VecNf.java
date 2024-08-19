@@ -1,4 +1,4 @@
-package com.github.NGoedix.watchvideo.util.math;
+package com.github.NGoedix.watchvideo.util.math.geo;
 
 public abstract class VecNf<T extends VecNf> {
     public VecNf() {

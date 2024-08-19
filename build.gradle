@@ -19,7 +19,7 @@ plugins {
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
 }
 
-version = '2.6.2-FORGE-1.19.4'
+version = '3.0.1-FORGE-1.19.4'
 group = 'com.github.NGoedix.VideoPlayer' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'VideoPlayer'
 
@@ -29,6 +29,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 minecraft {
     mappings channel: 'parchment', version: '1.19.3-2023.03.12-1.19.4'
+    accessTransformer file('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         client {
             workingDirectory project.file('run')
@@ -78,7 +79,7 @@ repositories {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.19.4-45.0.66'
 
-    implementation 'com.github.SrRapero720.watermedia:build:2.0.28'
+    implementation 'com.github.WaterMediaTeam.watermedia:build:2.0.69'
     implementation fg.deobf("curse.maven:jei-238222:4536209")
 }
 
