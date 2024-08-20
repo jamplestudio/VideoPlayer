@@ -1,3 +1,6 @@
+3.0.3
+- Fix issue that caused the video to don't start
+
 3.0.2
 - Temporary fix to servers to run (disabling hand radio block and wip overlay)
 
