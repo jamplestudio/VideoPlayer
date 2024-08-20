@@ -2,6 +2,7 @@ package com.github.NGoedix.watchvideo;
 
 import com.github.NGoedix.watchvideo.block.ModBlocks;
 import com.github.NGoedix.watchvideo.block.entity.ModBlockEntities;
+import com.github.NGoedix.watchvideo.client.ClientHandler;
 import com.github.NGoedix.watchvideo.client.gui.OverlayVideo;
 import com.github.NGoedix.watchvideo.client.render.TVBlockRenderer;
 import com.github.NGoedix.watchvideo.commands.RegisterCommands;
@@ -39,9 +40,6 @@ import com.github.NGoedix.watchvideo.common.CommonHandler;
 
 @Mod(Reference.MOD_ID)
 public class VideoPlayer {
-
-    @OnlyIn(Dist.CLIENT)
-    private static final OverlayVideo gui = new OverlayVideo();
 
     @OnlyIn(Dist.CLIENT)
     private static ImageRenderer IMG_PAUSED;
@@ -103,7 +101,7 @@ public class VideoPlayer {
     @OnlyIn(Dist.CLIENT)
     public void onRenderGameOverlay(RenderGameOverlayEvent.Post event) {
         if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
-            gui.renderOverlay(event.getMatrixStack());
+            ClientHandler.gui.renderOverlay(event.getMatrixStack());
         }
     }
 

@@ -3,6 +3,7 @@ package com.github.NGoedix.watchvideo.client;
 import com.github.NGoedix.watchvideo.block.entity.custom.HandRadioBlockEntity;
 import com.github.NGoedix.watchvideo.block.entity.custom.RadioBlockEntity;
 import com.github.NGoedix.watchvideo.block.entity.custom.TVBlockEntity;
+import com.github.NGoedix.watchvideo.client.gui.OverlayVideo;
 import com.github.NGoedix.watchvideo.client.gui.RadioScreen;
 import com.github.NGoedix.watchvideo.client.gui.TVVideoScreen;
 import com.github.NGoedix.watchvideo.client.gui.VideoScreen;
@@ -16,6 +17,8 @@ import me.lib720.caprica.vlcj.media.TrackType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +26,9 @@ import java.util.List;
 public class ClientHandler {
 
     private static final List<SyncMusicPlayer> musicPlayers = new ArrayList<>();
+
+    @OnlyIn(Dist.CLIENT)
+    public static final OverlayVideo gui = new OverlayVideo();
 
     public static void openVideo(String url, int volume, boolean isControlBlocked, boolean canSkip) {
         Minecraft.getInstance().setScreen(new VideoScreen(url, volume, isControlBlocked, canSkip, false));
