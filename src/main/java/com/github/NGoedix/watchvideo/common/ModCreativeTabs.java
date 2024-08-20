@@ -16,7 +16,7 @@ public class ModCreativeTabs {
 
     public static RegistryObject<CreativeModeTab> TV_TAB = CREATIVE_MODE_TABS.register("videplayer", () -> CreativeModeTab.builder()
             .icon(() -> new ItemStack(ModBlocks.TV_BLOCK.get()))
-            .title(Component.translatable("itemGroup.videoplayer.video_player_tab")).displayItems(ModCreativeTabs::displayItems).build());
+            .title(Component.translatable("itemGroup.videoplayer.items")).displayItems(ModCreativeTabs::displayItems).build());
 
     public static void displayItems(CreativeModeTab.ItemDisplayParameters displayParameters, CreativeModeTab.Output output)
     {
