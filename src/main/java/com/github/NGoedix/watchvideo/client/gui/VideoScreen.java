@@ -114,8 +114,11 @@ public class VideoScreen extends Screen {
         }
 
         // Handle easing for fade-out
-        if (closing || player.isEnded() || player.isStopped() || player.isBroken()) {
-            if (optionOutMode == -1) onClose();
+        if (closing || player.isEnded() || player.isBroken()) {
+            if (optionOutMode == -1) {
+                System.out.println("Closing without fading out");
+                onClose();
+            }
             if (optionInMode != -1 || closing) {
                 closing = true;
                 if (closingOnTick == -1) closingOnTick = tick + optionOutSecs * 20;
