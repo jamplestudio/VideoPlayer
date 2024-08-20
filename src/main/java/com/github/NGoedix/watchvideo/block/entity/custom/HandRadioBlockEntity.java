@@ -17,7 +17,8 @@ public class HandRadioBlockEntity extends VideoPlayerBlockEntity {
     private UUID playerUsing;
 
     public HandRadioBlockEntity() {
-        super(ModBlockEntities.HAND_RADIO_BLOCK_ENTITY.get(), true);
+        // TODO Change
+        super(ModBlockEntities.RADIO_BLOCK_ENTITY.get(), true);
     }
 
     public void tryOpen(World level, BlockPos blockPos, PlayerEntity player) {

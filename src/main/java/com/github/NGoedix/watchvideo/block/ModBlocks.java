@@ -33,8 +33,8 @@ public class ModBlocks {
     public static final RegistryObject<Block> RADIO_BLOCK = registerBlock("radio_block",
             () -> new RadioBlock(AbstractBlock.Properties.of(Material.METAL).noOcclusion().requiresCorrectToolForDrops().sound(SoundType.METAL).strength(3.5f, 6.0f)), VideoPlayerModTab.ALL);
 
-    public static final RegistryObject<Block> HAND_RADIO_BLOCK = registerBlockWithoutBlockItem("hand_radio_block",
-            () -> new HandRadioBlock(AbstractBlock.Properties.of(Material.METAL).noOcclusion().requiresCorrectToolForDrops().sound(SoundType.METAL).strength(3.5f, 6.0f)));
+//    public static final RegistryObject<Block> HAND_RADIO_BLOCK = registerBlockWithoutBlockItem("hand_radio_block",
+//            () -> new HandRadioBlock(AbstractBlock.Properties.of(Material.METAL).noOcclusion().requiresCorrectToolForDrops().sound(SoundType.METAL).strength(3.5f, 6.0f)));
 
     private static ToIntFunction<BlockState> litBlockEmission(int pLightValue) {
         return (blockstate) -> blockstate.getValue(BlockStateProperties.LIT) ? pLightValue : 0;

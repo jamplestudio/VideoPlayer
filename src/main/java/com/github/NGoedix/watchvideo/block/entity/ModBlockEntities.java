@@ -24,9 +24,9 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("radio_block_entity", () ->
                     TileEntityType.Builder.of(RadioBlockEntity::new, ModBlocks.RADIO_BLOCK.get()).build(null));
 
-    public static final RegistryObject<TileEntityType<HandRadioBlockEntity>> HAND_RADIO_BLOCK_ENTITY =
-            BLOCK_ENTITIES.register("hand_radio_block_entity", () ->
-                    TileEntityType.Builder.of(HandRadioBlockEntity::new, ModBlocks.HAND_RADIO_BLOCK.get()).build(null));
+//    public static final RegistryObject<TileEntityType<HandRadioBlockEntity>> HAND_RADIO_BLOCK_ENTITY =
+//            BLOCK_ENTITIES.register("hand_radio_block_entity", () ->
+//                    TileEntityType.Builder.of(HandRadioBlockEntity::new, ModBlocks.HAND_RADIO_BLOCK.get()).build(null));
 
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);

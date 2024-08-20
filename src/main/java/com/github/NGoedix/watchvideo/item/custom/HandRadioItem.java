@@ -28,7 +28,7 @@ public class HandRadioItem extends BlockItem {
     private static final Map<ItemStack, TextureCache> caches = new ConcurrentHashMap<>();
 
     public HandRadioItem(Properties pProperties) {
-        super(ModBlocks.HAND_RADIO_BLOCK.get(), pProperties);
+        super(ModBlocks.RADIO_BLOCK.get(), pProperties);
     }
 
     @Override

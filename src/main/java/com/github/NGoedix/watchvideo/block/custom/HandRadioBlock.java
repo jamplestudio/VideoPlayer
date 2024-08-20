@@ -119,6 +119,6 @@ public class HandRadioBlock extends Block {
     @Nullable
     @Override
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return ModBlockEntities.HAND_RADIO_BLOCK_ENTITY.get().create();
+        return ModBlockEntities.RADIO_BLOCK_ENTITY.get().create();
     }
 }
