@@ -14,12 +14,13 @@ public class ModCreativeTabs {
 
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Reference.MOD_ID);
 
-    public static RegistryObject<CreativeModeTab> TRAVELERS_BACKPACK = CREATIVE_MODE_TABS.register("videplayer", () -> CreativeModeTab.builder()
+    public static RegistryObject<CreativeModeTab> TV_TAB = CREATIVE_MODE_TABS.register("videplayer", () -> CreativeModeTab.builder()
             .icon(() -> new ItemStack(ModBlocks.TV_BLOCK.get()))
             .title(Component.translatable("itemGroup.videoplayer.video_player_tab")).displayItems(ModCreativeTabs::displayItems).build());
 
     public static void displayItems(CreativeModeTab.ItemDisplayParameters displayParameters, CreativeModeTab.Output output)
     {
         output.accept(ModBlocks.TV_BLOCK.get());
+        output.accept(ModBlocks.RADIO_BLOCK.get());
     }
 }
