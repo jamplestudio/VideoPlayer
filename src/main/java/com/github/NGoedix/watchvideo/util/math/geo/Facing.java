@@ -1,7 +1,7 @@
 package com.github.NGoedix.watchvideo.util.math.geo;
 
-import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
+import net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix;
 import net.minecraft.world.phys.AABB;
 
 public enum Facing {
@@ -150,7 +150,7 @@ public enum Facing {
         return VALUES[index];
     }
 
-    public static Facing get(Direction direction) {
+    public static Facing get(ChunkPalettedStorageFix.Direction direction) {
         if (direction == null)
             return null;
         return switch (direction) {

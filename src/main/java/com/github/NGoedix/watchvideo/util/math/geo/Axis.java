@@ -1,6 +1,7 @@
 package com.github.NGoedix.watchvideo.util.math.geo;
 
-import net.minecraft.core.Direction;
+
+import net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix;
 
 public enum Axis {
     X {
@@ -79,7 +80,7 @@ public enum Axis {
         }
     };
 
-    public static Axis get(Direction.Axis axis) {
+    public static Axis get(ChunkPalettedStorageFix.Direction.Axis axis) {
         return switch (axis) {
             case X -> X;
             case Y -> Y;

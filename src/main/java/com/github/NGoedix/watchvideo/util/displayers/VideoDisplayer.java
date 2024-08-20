@@ -88,7 +88,7 @@ public class VideoDisplayer implements IDisplay {
     private int calculateVolume(float volume, float minDistance, float maxDistance) {
         if (player == null) return 0;
         Minecraft mc = Minecraft.getInstance();
-        float distance = (float) pos.distance(Objects.requireNonNull(Minecraft.getInstance().player).getPosition(mc.isPaused() ? 1.0F : mc.getFrameTime()));
+        float distance = (float) pos.distance(Objects.requireNonNull(Minecraft.getInstance().player).getPosition(mc.isPaused() ? 1.0F : mc.getTimer().getGameTimeDeltaPartialTick(true)));
         volume = VideoMathUtil.calculateVolume(volume, distance, minDistance, maxDistance);
         return (int) volume;
     }
