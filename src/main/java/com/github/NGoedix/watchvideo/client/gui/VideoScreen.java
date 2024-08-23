@@ -35,11 +35,10 @@ public class VideoScreen extends Screen {
     private int tick = 0;
     private int closingOnTick = -1;
     private float fadeLevel = 0;
-    private float fadeStep30 = 0;
     private float fadeStep10 = 0;
+    private float fadeStep5 = 0;
     private boolean started;
     private boolean closing = false;
-    private boolean paused = false;
     private float volume;
 
     // CONTROL
@@ -68,7 +67,7 @@ public class VideoScreen extends Screen {
         super(new StringTextComponent(""));
 
         Minecraft minecraft = Minecraft.getInstance();
-        Minecraft.getInstance().getSoundManager().pause();
+        minecraft.getSoundManager().pause();
 
         this.volume = volume;
         this.controlBlocked = controlBlocked;
@@ -79,21 +78,15 @@ public class VideoScreen extends Screen {
         this.optionOutSecs = -1;
 
         this.player = new SyncVideoPlayer(null, minecraft);
-        Reference.LOGGER.info("Playing video (" + (!controlBlocked ? "not" : "") + "blocked) (" + url + " with volume: " + (int) (Minecraft.getInstance().options.getSoundSourceVolume(SoundCategory.MASTER) * volume));
+        Reference.LOGGER.info("Playing video (" + (!controlBlocked ? "not" : "") + "blocked) (" + url + " with volume: " + (int) (minecraft.options.getSoundSourceVolume(SoundCategory.MASTER) * volume));
 
-        player.setVolume((int) (Minecraft.getInstance().options.getSoundSourceVolume(SoundCategory.MASTER) * volume));
+        player.setVolume((int) (minecraft.options.getSoundSourceVolume(SoundCategory.MASTER) * volume));
         if (!fadeIn) {
             started = true;
             player.start(url);
         } else {
             player.startPaused(url);
         }
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        tick++;
     }
 
     @Override
@@ -131,13 +124,12 @@ public class VideoScreen extends Screen {
         }
 
         // BLACK SCREEN
-        if (!paused)
+        if (!player.isPaused())
             renderBlackBackground(stack);
 
         if (!started) return;
 
-        boolean playingState = (player.isPlaying() || player.isPaused()) && (player.getRawPlayerState().equals(State.PLAYING) || player.getRawPlayerState().equals(State.PAUSED));
-//        fadeLevel = (playingState) ? Math.max(fadeLevel - (pPartialTicks / 8), 0.0f) : Math.min(fadeLevel + (pPartialTicks / 16), 1.0f);
+        boolean playingState = (player.isPlaying() || player.isPaused());
 
         // RENDER VIDEO
         if (playingState || player.isStopped() || player.isEnded()) {
@@ -145,20 +137,21 @@ public class VideoScreen extends Screen {
         }
 
         // BLACK SCREEN
-        if (!paused)
+        if (!player.isPaused())
             renderBlackBackground(stack);
 
         // RENDER GIF
-        if (!player.isPlaying() || !player.getRawPlayerState().equals(State.PLAYING)) {
-            if (player.isPaused() && player.getRawPlayerState().equals(State.PAUSED)) {
+        if (!player.isPlaying() || !player.isPlaying()) {
+            if (player.isPaused() && player.isPaused()) {
                 renderIcon(stack, VideoPlayer.pausedImage());
             } else {
                 renderIcon(stack, ImageAPI.loadingGif());
             }
         }
 
-        renderStep10(stack, pPartialTicks);
-        renderStep30(stack, pPartialTicks);
+        // Render icons 10 and -5 seconds
+        renderStepIcon(stack, pPartialTicks, true);
+        renderStepIcon(stack, pPartialTicks, false);
 
         // DEBUG RENDERING
         if (!FMLLoader.isProduction()) {
@@ -223,28 +216,18 @@ public class VideoScreen extends Screen {
         RenderSystem.disableBlend();
     }
 
-    private void renderStep30(MatrixStack stack, float pPartialTicks) {
-        if (fadeStep30 == 0) return;
+    private void renderStepIcon(MatrixStack stack, float pPartialTicks, boolean forward) {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.bindTexture(VideoPlayer.step30Image().texture(tick, 1, true));
-        float alpha = fadeStep30;
+        RenderSystem.bindTexture(forward ? VideoPlayer.step10Image().texture(tick, 1, true) : VideoPlayer.step5Image().texture(tick, 1, true));
+        float alpha = forward ? fadeStep10 : fadeStep5;
         RenderSystem.color4f(1.0f, 1.0f, 1.0f, alpha);
-        AbstractGui.blit(stack, width / 2 + 70, height / 2 - 32, 0, 0, 64, 64, 64, 64);
-        fadeStep30 = Math.max(fadeStep30 - (pPartialTicks / 8), 0.0f);
-        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        RenderSystem.disableBlend();
-    }
-
-    private void renderStep10(MatrixStack stack, float pPartialTicks) {
-        if (fadeStep10 == 0) return;
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.bindTexture(VideoPlayer.step10Image().texture(tick, 1, true));
-        float alpha = fadeStep10;
-        RenderSystem.color4f(1.0f, 1.0f, 1.0f, alpha);
-        AbstractGui.blit(stack, width / 2 - 134, height / 2 - 32, 0, 0, 64, 64, 64, 64);
-        fadeStep10 = Math.max(fadeStep10 - (pPartialTicks / 8), 0.0f);
+        AbstractGui.blit(stack, width / 2 + (forward ? 70 : -134), height / 2 - 32, 0, 0, 64, 64, 64, 64);
+        if (forward) {
+            fadeStep10 = Math.max(fadeStep10 - (pPartialTicks / 8), 0.0f);
+        } else {
+            fadeStep5 = Math.max(fadeStep5 - (pPartialTicks / 8), 0.0f);
+        }
         RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
         RenderSystem.disableBlend();
     }
@@ -280,15 +263,12 @@ public class VideoScreen extends Screen {
 
         // Up arrow key (Volume)
         if (pKeyCode == 265) {
-            if (volume <= 95) {
+            if (volume <= 120) {
                 volume += 5;
             } else {
-                volume = 100;
+                volume = 125;
                 float masterVolume = Minecraft.getInstance().options.getSoundSourceVolume(SoundCategory.MASTER);
-                if (masterVolume <= 0.95)
-                    Minecraft.getInstance().options.setSoundCategoryVolume(SoundCategory.MASTER, masterVolume + 0.1F);
-                else
-                    Minecraft.getInstance().options.setSoundCategoryVolume(SoundCategory.MASTER, 1);
+                Minecraft.getInstance().options.setSoundCategoryVolume(SoundCategory.MASTER, masterVolume <= 0.95 ? masterVolume + 0.1F : 1.0F);
             }
 
             float actualVolume = Minecraft.getInstance().options.getSoundSourceVolume(SoundCategory.MASTER);
@@ -312,10 +292,10 @@ public class VideoScreen extends Screen {
 
         // M to mute
         if (pKeyCode == 77) {
-            if (!player.raw().mediaPlayer().audio().isMute()) {
-                player.mute();
-            } else {
+            if (player.isMuted()) {
                 player.unmute();
+            } else {
+                player.mute();
             }
         }
 
@@ -324,25 +304,19 @@ public class VideoScreen extends Screen {
 
         // Shift + Right arrow key (Forwards)
         if (hasShiftDown() && pKeyCode == 262) {
-            player.seekTo(player.getTime() + 30000);
-            fadeStep30 = 1;
+            player.seekTo(player.getTime() + 10000);
+            fadeStep10 = 1;
         }
 
         // Shift + Left arrow key (Backwards)
         if (hasShiftDown() && pKeyCode == 263) {
-            player.seekTo(player.getTime() - 10000);
-            fadeStep10 = 1;
+            player.seekTo(player.getTime() - 5000);
+            fadeStep5 = 1;
         }
 
         // Shift + Space (Pause / Play)
         if (hasShiftDown() && pKeyCode == 32) {
-            if (!player.isPaused()) {
-                paused = true;
-                player.pause();
-            } else {
-                paused = false;
-                player.play();
-            }
+            player.togglePlayback();
         }
 
         return super.keyPressed(pKeyCode, pScanCode, pModifiers);
@@ -372,6 +346,12 @@ public class VideoScreen extends Screen {
             this.height = Minecraft.getInstance().screen.height;
         }
         super.init();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        tick++;
     }
 }
 

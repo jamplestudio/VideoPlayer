@@ -1,6 +1,5 @@
 package com.github.NGoedix.watchvideo.client;
 
-import com.github.NGoedix.watchvideo.block.custom.HandRadioBlock;
 import com.github.NGoedix.watchvideo.block.entity.custom.HandRadioBlockEntity;
 import com.github.NGoedix.watchvideo.block.entity.custom.RadioBlockEntity;
 import com.github.NGoedix.watchvideo.block.entity.custom.TVBlockEntity;
@@ -9,17 +8,11 @@ import com.github.NGoedix.watchvideo.client.gui.RadioScreen;
 import com.github.NGoedix.watchvideo.client.gui.TVVideoScreen;
 import com.github.NGoedix.watchvideo.client.gui.VideoScreen;
 import com.github.NGoedix.watchvideo.item.custom.HandRadioItem;
-import me.lib720.caprica.vlcj.media.MediaRef;
-import me.lib720.caprica.vlcj.player.base.MediaPlayer;
-import me.lib720.caprica.vlcj.player.base.MediaPlayerEventListener;
 import me.srrapero720.watermedia.api.player.SyncMusicPlayer;
-import me.lib720.caprica.vlcj.media.TrackType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,70 +32,20 @@ public class ClientHandler {
     }
 
     public static void playMusic(String url, int volume) {
+        // Until any callback in SyncMusicPlayer I will check if the music is playing when added other music player
+        for (SyncMusicPlayer musicPlayer : musicPlayers) {
+            if (musicPlayer.isPlaying()) {
+                musicPlayer.stop();
+                musicPlayer.release();
+                musicPlayers.remove(musicPlayer);
+            }
+        }
+
+        // Add the new player
         SyncMusicPlayer musicPlayer = new SyncMusicPlayer();
         musicPlayers.add(musicPlayer);
         musicPlayer.setVolume(volume);
         musicPlayer.start(url);
-        musicPlayer.raw().mediaPlayer().events().addMediaPlayerEventListener(new MediaPlayerEventListener() {
-            @Override
-            public void mediaChanged(MediaPlayer mediaPlayer, MediaRef mediaRef) {}
-            @Override
-            public void opening(MediaPlayer mediaPlayer) {}
-            @Override
-            public void buffering(MediaPlayer mediaPlayer, float v) {}
-            @Override
-            public void playing(MediaPlayer mediaPlayer) {}
-            @Override
-            public void paused(MediaPlayer mediaPlayer) {}
-            @Override
-            public void stopped(MediaPlayer mediaPlayer) {}
-            @Override
-            public void forward(MediaPlayer mediaPlayer) {}
-            @Override
-            public void backward(MediaPlayer mediaPlayer) {}
-            @Override
-            public void finished(MediaPlayer mediaPlayer) {
-                musicPlayers.remove(musicPlayer);
-            }
-            @Override
-            public void timeChanged(MediaPlayer mediaPlayer, long l) {}
-            @Override
-            public void positionChanged(MediaPlayer mediaPlayer, float v) {}
-            @Override
-            public void seekableChanged(MediaPlayer mediaPlayer, int i) {}
-            @Override
-            public void pausableChanged(MediaPlayer mediaPlayer, int i) {}
-            @Override
-            public void titleChanged(MediaPlayer mediaPlayer, int i) {}
-            @Override
-            public void snapshotTaken(MediaPlayer mediaPlayer, String s) {}
-            @Override
-            public void lengthChanged(MediaPlayer mediaPlayer, long l) {}
-            @Override
-            public void videoOutput(MediaPlayer mediaPlayer, int i) {}
-            @Override
-            public void scrambledChanged(MediaPlayer mediaPlayer, int i) {}
-            @Override
-            public void elementaryStreamAdded(MediaPlayer mediaPlayer, TrackType trackType, int i) {}
-            @Override
-            public void elementaryStreamDeleted(MediaPlayer mediaPlayer, TrackType trackType, int i) {}
-            @Override
-            public void elementaryStreamSelected(MediaPlayer mediaPlayer, TrackType trackType, int i) {}
-            @Override
-            public void corked(MediaPlayer mediaPlayer, boolean b) {}
-            @Override
-            public void muted(MediaPlayer mediaPlayer, boolean b) {}
-            @Override
-            public void volumeChanged(MediaPlayer mediaPlayer, float v) {}
-            @Override
-            public void audioDeviceChanged(MediaPlayer mediaPlayer, String s) {}
-            @Override
-            public void chapterChanged(MediaPlayer mediaPlayer, int i) {}
-            @Override
-            public void error(MediaPlayer mediaPlayer) {}
-            @Override
-            public void mediaPlayerReady(MediaPlayer mediaPlayer) {}
-        });
     }
 
     public static void stopMusicIfPlaying() {

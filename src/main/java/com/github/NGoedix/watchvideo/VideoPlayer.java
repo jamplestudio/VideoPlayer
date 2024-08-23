@@ -18,6 +18,7 @@ import me.srrapero720.watermedia.api.image.ImageAPI;
 import me.srrapero720.watermedia.api.image.ImageRenderer;
 import me.srrapero720.watermedia.core.tools.JarTool;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.command.arguments.ArgumentTypes;
@@ -34,29 +35,28 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLLoader;
 
-// The value here should match an entry in the META-INF/mods.toml file
 @Mod(Reference.MOD_ID)
-public class VideoPlayer
-{
+public class VideoPlayer {
 
     @OnlyIn(Dist.CLIENT)
     private static ImageRenderer IMG_PAUSED;
 
     @OnlyIn(Dist.CLIENT)
-    private static ImageRenderer IMG_STEP30;
+    private static ImageRenderer IMG_STEP10;
 
     @OnlyIn(Dist.CLIENT)
-    private static ImageRenderer IMG_STEP10;
+    private static ImageRenderer IMG_STEP5;
 
     @OnlyIn(Dist.CLIENT)
     public static ImageRenderer pausedImage() { return IMG_PAUSED; }
 
     @OnlyIn(Dist.CLIENT)
-    public static ImageRenderer step30Image() { return IMG_STEP30; }
+    public static ImageRenderer step10Image() { return IMG_STEP10; }
 
     @OnlyIn(Dist.CLIENT)
-    public static ImageRenderer step10Image() { return IMG_STEP10; }
+    public static ImageRenderer step5Image() { return IMG_STEP5; }
 
     public VideoPlayer() {
         // Register the setup method for modloading
@@ -82,14 +82,18 @@ public class VideoPlayer
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
+        if (VideoPlayerUtils.isInstalled("mr_stellarity", "stellarity")) {
+            throw new VideoPlayerUtils.UnsupportedModException("mr_stellarity (Stellarity)", "breaks picture rendering, overwrites Minecraft core shaders and isn't possible work around that");
+        }
+
         RadioStreams.prepareRadios();
 
         RenderTypeLookup.setRenderLayer(ModBlocks.TV_BLOCK.get(), RenderType.cutout());
         ClientRegistry.bindTileEntityRenderer(ModBlockEntities.TV_BLOCK_ENTITY.get(), TVBlockRenderer::new);
 
         IMG_PAUSED = ImageAPI.renderer(JarTool.readImage("/pictures/paused.png"), true);
-        IMG_STEP30 = ImageAPI.renderer(JarTool.readImage("/pictures/step30.png"), true);
         IMG_STEP10 = ImageAPI.renderer(JarTool.readImage("/pictures/step10.png"), true);
+        IMG_STEP5 = ImageAPI.renderer(JarTool.readImage("/pictures/step5.png"), true);
     }
 
     @SubscribeEvent
