@@ -3,7 +3,6 @@ package com.github.NGoedix.watchvideo;
 import com.github.NGoedix.watchvideo.block.ModBlocks;
 import com.github.NGoedix.watchvideo.block.entity.ModBlockEntities;
 import com.github.NGoedix.watchvideo.client.ClientHandler;
-import com.github.NGoedix.watchvideo.client.gui.OverlayVideo;
 import com.github.NGoedix.watchvideo.client.render.TVBlockRenderer;
 import com.github.NGoedix.watchvideo.commands.RegisterCommands;
 import com.github.NGoedix.watchvideo.commands.arguments.SymbolStringArgumentSerializer;
@@ -12,7 +11,6 @@ import com.github.NGoedix.watchvideo.item.ModItems;
 import com.github.NGoedix.watchvideo.util.RadioStreams;
 import com.github.NGoedix.watchvideo.util.cache.TextureCache;
 import com.github.NGoedix.watchvideo.util.displayers.VideoDisplayer;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import me.srrapero720.watermedia.api.image.ImageAPI;
 import me.srrapero720.watermedia.api.image.ImageRenderer;
 import me.srrapero720.watermedia.core.tools.JarTool;
@@ -20,8 +18,6 @@ import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.commands.synchronization.ArgumentTypes;
-import net.minecraft.commands.synchronization.brigadier.StringArgumentSerializer;
-import net.minecraft.world.level.block.LevelEvent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -34,8 +30,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import com.github.NGoedix.watchvideo.common.CommonHandler;
 
 @Mod(Reference.MOD_ID)
@@ -45,19 +39,19 @@ public class VideoPlayer {
     private static ImageRenderer IMG_PAUSED;
 
     @OnlyIn(Dist.CLIENT)
-    private static ImageRenderer IMG_STEP30;
+    private static ImageRenderer IMG_STEP10;
 
     @OnlyIn(Dist.CLIENT)
-    private static ImageRenderer IMG_STEP10;
+    private static ImageRenderer IMG_STEP5;
 
     @OnlyIn(Dist.CLIENT)
     public static ImageRenderer pausedImage() { return IMG_PAUSED; }
 
     @OnlyIn(Dist.CLIENT)
-    public static ImageRenderer step30Image() { return IMG_STEP30; }
+    public static ImageRenderer step10Image() { return IMG_STEP10; }
 
     @OnlyIn(Dist.CLIENT)
-    public static ImageRenderer step10Image() { return IMG_STEP10; }
+    public static ImageRenderer step5Image() { return IMG_STEP5; }
 
     public VideoPlayer() {
         Reference.LOGGER.info("Initializing mod...");
@@ -66,7 +60,6 @@ public class VideoPlayer {
         ModBlocks.register(eventBus);
         ModBlockEntities.register(eventBus);
         ModItems.register(eventBus);
-//        ModContainerTypes.register(eventBus);
 
         eventBus.addListener(this::onCommonSetup);
         eventBus.addListener(this::onClientSetup);
@@ -77,19 +70,18 @@ public class VideoPlayer {
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
+        if (VideoPlayerUtils.isInstalled("mr_stellarity", "stellarity")) {
+            throw new VideoPlayerUtils.UnsupportedModException("mr_stellarity (Stellarity)", "breaks picture rendering, overwrites Minecraft core shaders and isn't possible work around that");
+        }
+
         RadioStreams.prepareRadios();
 
         ItemBlockRenderTypes.setRenderLayer(ModBlocks.TV_BLOCK.get(), RenderType.cutout());
         BlockEntityRenderers.register(ModBlockEntities.TV_BLOCK_ENTITY.get(), TVBlockRenderer::new);
 
-        loadImages();
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    private void loadImages() {
         IMG_PAUSED = ImageAPI.renderer(JarTool.readImage("/pictures/paused.png"), true);
-        IMG_STEP30 = ImageAPI.renderer(JarTool.readImage("/pictures/step30.png"), true);
         IMG_STEP10 = ImageAPI.renderer(JarTool.readImage("/pictures/step10.png"), true);
+        IMG_STEP5 = ImageAPI.renderer(JarTool.readImage("/pictures/step5.png"), true);
     }
 
     private void onCommonSetup(FMLCommonSetupEvent event) {

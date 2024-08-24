@@ -8,7 +8,6 @@ import me.srrapero720.watermedia.api.math.MathAPI;
 import me.srrapero720.watermedia.api.player.SyncBasePlayer;
 import me.srrapero720.watermedia.api.player.SyncMusicPlayer;
 import me.srrapero720.watermedia.api.player.SyncVideoPlayer;
-import me.lib720.caprica.vlcj.player.base.State;
 import net.minecraft.client.Minecraft;
 
 import java.awt.*;
@@ -141,7 +140,7 @@ public class VideoDisplayer implements IDisplay {
 
     @Override
     public boolean isPlaying() {
-        return (player.isPlaying() || player.isPaused()) && (player.getRawPlayerState().equals(State.PLAYING) || player.getRawPlayerState().equals(State.PAUSED));
+        return player.isPlaying() || player.isPaused();
     }
 
     @Override

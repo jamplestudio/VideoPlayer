@@ -21,7 +21,7 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.parchmentmc.librarian.forgegradle'
 
-version = '3.0.2-FORGE-1.18.X'
+version = '3.0.4-FORGE-1.18.X'
 group = 'com.github.NGoedix.VideoPlayer' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'VideoPlayer'
 
