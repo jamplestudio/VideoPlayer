@@ -80,7 +80,6 @@ public class TVVideoScreen extends Screen {
 
         Minecraft.getInstance().keyboardHandler.setSendRepeatsToGui(true);
 
-        // Expresión regular para validar una URL
         String urlPattern = "(http|https)://(www\\.)?([\\w]+\\.)+[\\w]{2,63}/?[\\w\\-\\?\\=\\&\\%\\.\\/]*/?";
 
         addRenderableWidget(urlBox = new EditBox(font, leftPos + 10, topPos + 165, imageWidth - 26, 20, Component.literal("")));
@@ -177,7 +176,6 @@ public class TVVideoScreen extends Screen {
         });
         volumeSlider.setValue(volume / 100f);
 
-        // Cast the block entity to the correct type and set the volume
         be.setVolume(volume);
     }
 

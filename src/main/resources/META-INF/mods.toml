@@ -3,7 +3,7 @@ loaderVersion="[41,)"
 license="All Rights Reserved"
 [[mods]]
 modId="videoplayer"
-version="3.0.1"
+version="3.0.5"
 displayName="VideoPlayer"
 authors="Goedix"
 description='''
