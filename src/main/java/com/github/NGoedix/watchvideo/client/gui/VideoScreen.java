@@ -226,7 +226,7 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
     private void renderStepIcon(GuiGraphics stack, float pPartialTicks, boolean forward) {
         float alpha = forward ? fadeStep10 : fadeStep5;
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, alpha);
-        drawTexture(stack, forward ? VideoPlayer.step10Image().texture(tick) : VideoPlayer.step5Image().texture(tick), width / 2 + (forward ? 70 : -134), height / 2 - 32, 0, 0, 64, 64, 64, 64);
+        drawTexture(stack, forward ? VideoPlayer.step10Image().texture(0) : VideoPlayer.step5Image().texture(0), width / 2 + (forward ? 70 : -134), height / 2 - 32, 64, 64, 0.0f, 0.0f, 1.0f, 1.0f);
         if (forward) {
             fadeStep10 = Math.max(fadeStep10 - (pPartialTicks / 8), 0.0f);
         } else {
