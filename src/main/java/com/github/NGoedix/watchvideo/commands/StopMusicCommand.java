@@ -17,7 +17,7 @@ import java.util.Collection;
 public class StopMusicCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher){
-        dispatcher.register(Commands.literal("stopvideo")
+        dispatcher.register(Commands.literal("stopmusic")
                 .requires(source -> source.hasPermission(2))
                 .then(Commands.argument("target", EntityArgument.players())
                         .executes(StopMusicCommand::execute)));
