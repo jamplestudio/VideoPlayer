@@ -1,3 +1,6 @@
+3.0.5
+- Fixed fading in playgovideo command
+
 3.0.4
 - Stopmusic command was added (it was stopvideo too in the name)
 - Removed raw callbacks from watermedia

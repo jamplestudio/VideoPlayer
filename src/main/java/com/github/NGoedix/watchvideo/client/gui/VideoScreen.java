@@ -124,7 +124,7 @@ public class VideoScreen extends Screen {
         }
 
         // BLACK SCREEN
-        if (!player.isPaused())
+        if (!player.isPaused() || optionInMode != -1 || optionOutMode != -1)
             renderBlackBackground(stack);
 
         if (!started) return;
