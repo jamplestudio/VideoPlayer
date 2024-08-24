@@ -133,7 +133,7 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
         }
 
         // BLACK SCREEN
-        if (!player.isPaused())
+        if (!player.isPaused() || optionInMode != -1 || optionOutMode != -1)
             renderBlackBackground(stack);
 
         if (!started) return;
