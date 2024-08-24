@@ -6,8 +6,6 @@ import com.github.NGoedix.watchvideo.util.math.VideoMathUtil;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import me.lib720.caprica.vlcj.player.base.State;
-import me.srrapero720.watermedia.api.WaterMediaAPI;
 import me.srrapero720.watermedia.api.image.ImageAPI;
 import me.srrapero720.watermedia.api.image.ImageRenderer;
 import me.srrapero720.watermedia.api.math.MathAPI;
@@ -22,7 +20,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraftforge.fml.loading.FMLLoader;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.text.DateFormat;
@@ -42,11 +39,10 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
     private int tick = 0;
     private int closingOnTick = -1;
     private float fadeLevel = 0;
-    private float fadeStep30 = 0;
     private float fadeStep10 = 0;
+    private float fadeStep5 = 0;
     private boolean started;
     private boolean closing = false;
-    private boolean paused = false;
     private float volume;
 
     // CONTROL
@@ -118,8 +114,11 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
         }
 
         // Handle easing for fade-out
-        if (closing || player.isEnded() || player.isStopped() || player.isBroken()) {
-            if (optionOutMode == -1) onClose();
+        if (closing || player.isEnded() || player.isBroken()) {
+            if (optionOutMode == -1) {
+                System.out.println("Closing without fading out");
+                onClose();
+            }
             if (optionInMode != -1 || closing) {
                 closing = true;
                 if (closingOnTick == -1) closingOnTick = tick + optionOutSecs * 20;
@@ -132,13 +131,12 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
         }
 
         // BLACK SCREEN
-        if (!paused)
+        if (!player.isPaused() || optionInMode != -1 || optionOutMode != -1)
             renderBlackBackground(guiGraphics);
 
         if (!started) return;
 
-        boolean playingState = (player.isPlaying() || player.isPaused()) && (player.getRawPlayerState().equals(State.PLAYING) || player.getRawPlayerState().equals(State.PAUSED));
-//        fadeLevel = (playingState) ? Math.max(fadeLevel - (pPartialTick / 8), 0.0f) : Math.min(fadeLevel + (pPartialTick / 16), 1.0f);
+        boolean playingState = (player.isPlaying() || player.isPaused());
 
         // RENDER VIDEO
         if (playingState || player.isStopped() || player.isEnded()) {
@@ -146,20 +144,21 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
         }
 
         // BLACK SCREEN
-        if (!paused)
+        if (!player.isPaused())
             renderBlackBackground(guiGraphics);
 
         // RENDER GIF
-        if (!player.isPlaying() || !player.getRawPlayerState().equals(State.PLAYING)) {
-            if (player.isPaused() && player.getRawPlayerState().equals(State.PAUSED)) {
+        if (!player.isPlaying() || !player.isPlaying()) {
+            if (player.isPaused() && player.isPaused()) {
                 renderIcon(guiGraphics, VideoPlayer.pausedImage());
             } else {
                 renderIcon(guiGraphics, ImageAPI.loadingGif());
             }
         }
 
-        renderStep10(guiGraphics, pPartialTick);
-        renderStep30(guiGraphics, pPartialTick);
+        // Render icons 10 and -5 seconds
+        renderStepIcon(guiGraphics, pPartialTick, true);
+        renderStepIcon(guiGraphics, pPartialTick, false);
 
         // DEBUG RENDERING
         if (!FMLLoader.isProduction()) {
@@ -224,42 +223,15 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
         drawTexture(guiGraphics, image.texture(tick, 1, true), xOffset, yOffset, iconSize, iconSize, 0.0f, 0.0f, 1.0f, 1.0f);
     }
 
-    private void renderStep30(GuiGraphics guiGraphics, float pPartialTicks) {
-        if (fadeStep30 == 0) return;
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        int texture = VideoPlayer.step30Image().texture(tick, 1, true);
-        float alpha = fadeStep30;
+    private void renderStepIcon(GuiGraphics stack, float pPartialTicks, boolean forward) {
+        float alpha = forward ? fadeStep10 : fadeStep5;
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, alpha);
-
-        int x = width / 2 + 70;
-        int y = height / 2 - 32;
-        int size = 64;
-
-        drawTexture(guiGraphics, texture, x, y, size, size, 0.0f, 0.0f, 1.0f, 1.0f);
-
-        fadeStep30 = Math.max(fadeStep30 - (pPartialTicks / 8), 0.0f);
-        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        RenderSystem.disableBlend();
-    }
-
-    private void renderStep10(GuiGraphics guiGraphics, float pPartialTicks) {
-        if (fadeStep10 == 0) return;
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        int texture = VideoPlayer.step10Image().texture(tick, 1, true);
-        float alpha = fadeStep10;
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, alpha);
-
-        int x = width / 2 - 134;
-        int y = height / 2 - 32;
-        int size = 64;
-
-        drawTexture(guiGraphics, texture, x, y, size, size, 0.0f, 0.0f, 1.0f, 1.0f);
-
-        fadeStep10 = Math.max(fadeStep10 - (pPartialTicks / 8), 0.0f);
-        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        RenderSystem.disableBlend();
+        drawTexture(stack, forward ? VideoPlayer.step10Image().texture(tick) : VideoPlayer.step5Image().texture(tick), width / 2 + (forward ? 70 : -134), height / 2 - 32, 0, 0, 64, 64, 64, 64);
+        if (forward) {
+            fadeStep10 = Math.max(fadeStep10 - (pPartialTicks / 8), 0.0f);
+        } else {
+            fadeStep5 = Math.max(fadeStep5 - (pPartialTicks / 8), 0.0f);
+        }
     }
 
     private void drawTexture(GuiGraphics guiGraphics, int texture, int x, int y, int width, int height, float uMin, float vMin, float uMax, float vMax) {
@@ -282,24 +254,15 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
     }
 
     private double applyEasing(int mode, double start, double end, double t) {
-        switch (mode) {
-            case 0:
-                return VideoMathUtil.easeIn(start, end, t);
-            case 1:
-                return VideoMathUtil.easeOut(start, end, t);
-            default:
-                return end;
-        }
+        return switch (mode) {
+            case 0 -> VideoMathUtil.easeIn(start, end, t);
+            case 1 -> VideoMathUtil.easeOut(start, end, t);
+            default -> end;
+        };
     }
 
     private void draw(GuiGraphics guiGraphics, String text, int height) {
         guiGraphics.drawString(Minecraft.getInstance().font, text, 5, height, 0xffffff);
-    }
-
-    @Override
-    protected void containerTick() {
-        super.containerTick();
-        tick++;
     }
 
     @Override
@@ -311,15 +274,12 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
 
         // Up arrow key (Volume)
         if (pKeyCode == 265) {
-            if (volume <= 95) {
+            if (volume <= 120) {
                 volume += 5;
             } else {
-                volume = 100;
+                volume = 125;
                 float masterVolume = Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MASTER);
-                if (masterVolume <= 0.95)
-                    Minecraft.getInstance().options.getSoundSourceOptionInstance(SoundSource.MASTER).set(masterVolume + 0.05);
-                else
-                    Minecraft.getInstance().options.getSoundSourceOptionInstance(SoundSource.MASTER).set(1.0);
+                Minecraft.getInstance().options.getSoundSourceOptionInstance(SoundSource.MASTER).set((double) (masterVolume <= 0.95 ? masterVolume + 0.1F : 1.0F));
             }
 
             float actualVolume = Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MASTER);
@@ -343,10 +303,10 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
 
         // M to mute
         if (pKeyCode == 77) {
-            if (!player.raw().mediaPlayer().audio().isMute()) {
-                player.mute();
-            } else {
+            if (player.isMuted()) {
                 player.unmute();
+            } else {
+                player.mute();
             }
         }
 
@@ -355,25 +315,19 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
 
         // Shift + Right arrow key (Forwards)
         if (hasShiftDown() && pKeyCode == 262) {
-            player.seekTo(player.getTime() + 30000);
-            fadeStep30 = 1;
+            player.seekTo(player.getTime() + 10000);
+            fadeStep10 = 1;
         }
 
         // Shift + Left arrow key (Backwards)
         if (hasShiftDown() && pKeyCode == 263) {
-            player.seekTo(player.getTime() - 10000);
-            fadeStep10 = 1;
+            player.seekTo(player.getTime() - 5000);
+            fadeStep5 = 1;
         }
 
         // Shift + Space (Pause / Play)
         if (hasShiftDown() && pKeyCode == 32) {
-            if (!player.isPaused()) {
-                paused = true;
-                player.pause();
-            } else {
-                paused = false;
-                player.play();
-            }
+            player.togglePlayback();
         }
 
         return super.keyPressed(pKeyCode, pScanCode, pModifiers);
@@ -405,5 +359,10 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
         super.init();
     }
 
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        tick++;
+    }
 }
 
