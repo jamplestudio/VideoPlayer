@@ -1,9 +1,8 @@
 package com.github.NGoedix.watchvideo.util.displayers;
 
 import com.github.NGoedix.watchvideo.util.cache.TextureCache;
-import com.github.NGoedix.watchvideo.util.math.VideoMathUtil;
 import com.github.NGoedix.watchvideo.util.math.geo.Vec3d;
-import me.lib720.caprica.vlcj.player.base.State;
+import com.github.NGoedix.watchvideo.util.math.VideoMathUtil;
 import me.lib720.watermod.safety.TryCore;
 import me.srrapero720.watermedia.api.math.MathAPI;
 import me.srrapero720.watermedia.api.player.SyncBasePlayer;
@@ -141,7 +140,7 @@ public class VideoDisplayer implements IDisplay {
 
     @Override
     public boolean isPlaying() {
-        return (player.isPlaying() || player.isPaused()) && (player.getRawPlayerState().equals(State.PLAYING) || player.getRawPlayerState().equals(State.PAUSED));
+        return player.isPlaying() || player.isPaused();
     }
 
     @Override

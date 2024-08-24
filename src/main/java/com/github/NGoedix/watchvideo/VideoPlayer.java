@@ -44,25 +44,22 @@ public class VideoPlayer
 {
 
     @OnlyIn(Dist.CLIENT)
-    private static final OverlayVideo gui = new OverlayVideo();
-
-    @OnlyIn(Dist.CLIENT)
     private static ImageRenderer IMG_PAUSED;
-
-    @OnlyIn(Dist.CLIENT)
-    private static ImageRenderer IMG_STEP30;
 
     @OnlyIn(Dist.CLIENT)
     private static ImageRenderer IMG_STEP10;
 
     @OnlyIn(Dist.CLIENT)
+    private static ImageRenderer IMG_STEP5;
+
+    @OnlyIn(Dist.CLIENT)
     public static ImageRenderer pausedImage() { return IMG_PAUSED; }
 
     @OnlyIn(Dist.CLIENT)
-    public static ImageRenderer step30Image() { return IMG_STEP30; }
+    public static ImageRenderer step10Image() { return IMG_STEP10; }
 
     @OnlyIn(Dist.CLIENT)
-    public static ImageRenderer step10Image() { return IMG_STEP10; }
+    public static ImageRenderer step5Image() { return IMG_STEP5; }
 
     public static CreativeModeTab videoPlayerTab;
     private static final ResourceLocation VIDEO_PLAYER_TAB_ID = new ResourceLocation(Reference.MOD_ID, "video_player_tab");
@@ -83,7 +80,6 @@ public class VideoPlayer
         eventBus.addListener(this::onCreativeTabRegistration);
         eventBus.addListener(this::addCreative);
 
-        // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -94,19 +90,18 @@ public class VideoPlayer
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
+        if (VideoPlayerUtils.isInstalled("mr_stellarity", "stellarity")) {
+            throw new VideoPlayerUtils.UnsupportedModException("mr_stellarity (Stellarity)", "breaks picture rendering, overwrites Minecraft core shaders and isn't possible work around that");
+        }
+
         RadioStreams.prepareRadios();
 
         ItemBlockRenderTypes.setRenderLayer(ModBlocks.TV_BLOCK.get(), RenderType.cutout());
         BlockEntityRenderers.register(ModBlockEntities.TV_BLOCK_ENTITY.get(), TVBlockRenderer::new);
 
-        loadImages();
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    private void loadImages() {
         IMG_PAUSED = ImageAPI.renderer(JarTool.readImage("/pictures/paused.png"), true);
-        IMG_STEP30 = ImageAPI.renderer(JarTool.readImage("/pictures/step30.png"), true);
         IMG_STEP10 = ImageAPI.renderer(JarTool.readImage("/pictures/step10.png"), true);
+        IMG_STEP5 = ImageAPI.renderer(JarTool.readImage("/pictures/step5.png"), true);
     }
 
     private void onCreativeTabRegistration(CreativeModeTabEvent.Register event) {
