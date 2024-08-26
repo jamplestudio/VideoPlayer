@@ -1,46 +1,45 @@
 package com.github.NGoedix.videoplayer.client.render;
 
+import com.github.NGoedix.videoplayer.util.math.geo.BoxCorner;
 import com.github.NGoedix.videoplayer.block.custom.TVBlock;
 import com.github.NGoedix.videoplayer.block.entity.custom.TVBlockEntity;
 import com.github.NGoedix.videoplayer.util.displayers.IDisplay;
-import com.github.NGoedix.videoplayer.util.math.*;
+import com.github.NGoedix.videoplayer.util.math.geo.*;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
 import me.srrapero720.watermedia.api.image.ImageAPI;
-import me.srrapero720.watermedia.api.image.ImageRenderer;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
-@Environment(EnvType.CLIENT)
 public class TVBlockRenderer implements BlockEntityRenderer<TVBlockEntity> {
 
-    private static BufferedImage blackTextureBuffer = null;
-    private static ImageRenderer blackTexture = null;
+    public TVBlockRenderer(BlockEntityRendererProvider.Context dispatcher) {}
 
-    public TVBlockRenderer(BlockEntityRendererFactory.Context dispatcher) {
-        if (blackTextureBuffer == null) {
-            blackTextureBuffer = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-            blackTextureBuffer.setRGB(0, 0, Color.BLACK.getRGB());
-            blackTexture = ImageAPI.renderer(blackTextureBuffer);
-        }
+    @Override
+    public boolean shouldRenderOffScreen(TVBlockEntity frame) {
+        return frame.getSizeX() > 16 || frame.getSizeY() > 16;
     }
 
     @Override
-    public void render(TVBlockEntity frame, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
+    public boolean shouldRender(TVBlockEntity frame, @NotNull Vec3 vec) {
+        return Vec3.atCenterOf(frame.getBlockPos()).closerThan(vec, 128);
+    }
+
+    @Override
+    public void render(TVBlockEntity frame, float pPartialTick, @NotNull PoseStack pose, @NotNull MultiBufferSource pBufferSource, int pPackedLight, int pPackedOverlay) {
         if (frame.isURLEmpty()) {
             if (frame.display != null) frame.display.release();
             return;
@@ -49,24 +48,22 @@ public class TVBlockRenderer implements BlockEntityRenderer<TVBlockEntity> {
         IDisplay display = frame.requestDisplay();
         if (display == null) {
             if (!frame.isPlaying()) return;
-            renderTexture(frame, null, ImageAPI.loadingGif().texture((int) (MinecraftClient.getInstance().world.getTime()), 1, true), matrices, true);
+            renderTexture(frame, null, ImageAPI.loadingGif().texture((int) (Minecraft.getInstance().level.getGameTime()), 1, true), pose, true);
             return;
         }
 
-        int texture = display.prepare(frame.getUrl(), frame.getVolume() * MinecraftClient.getInstance().options.getSoundVolume(SoundCategory.MASTER), frame.minDistance, frame.maxDistance, frame.isPlaying(), frame.isLoop(), frame.getTick());
+        int texture = display.prepare(frame.getUrl(), frame.isPlaying(), true, frame.getTick());
 
-        if (texture == -1) {
-            return;
-        }
+        if (texture == -1) return;
 
-        renderTexture(frame, display, blackTexture.texture(1, 1, false), matrices, false);
-        renderTexture(frame, display, texture, matrices, true);
+        renderTexture(frame, display, ImageAPI.blackPicture().texture(1, 1, false), pose, false);
+        renderTexture(frame, display, texture, pose, true);
     }
 
-    private void renderTexture(TVBlockEntity frame, IDisplay display, int texture, MatrixStack pose, boolean aspectRatio) {
+    private void renderTexture(TVBlockEntity frame, IDisplay display, int texture, PoseStack pose, boolean aspectRatio) {
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
-        RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
         RenderSystem.bindTexture(texture);
@@ -75,7 +72,7 @@ public class TVBlockRenderer implements BlockEntityRenderer<TVBlockEntity> {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
 
-        Direction d = frame.getCachedState().get(TVBlock.FACING);
+        Direction d = frame.getBlockState().getValue(TVBlock.FACING);
         if (d == Direction.NORTH) {
             d = Direction.SOUTH;
         } else if (d == Direction.SOUTH) {
@@ -145,55 +142,45 @@ public class TVBlockRenderer implements BlockEntityRenderer<TVBlockEntity> {
         }
         BoxFace face = BoxFace.get(facing);
 
-        pose.push();
+        pose.pushPose();
 
         if (d == Direction.NORTH) {
-            pose.translate(-0.185, 0, 0);
+            pose.translate(-0.200, 0, 0);
         }
 
         if (d == Direction.SOUTH) {
-            pose.translate(-0.185, 0, 0);
+            pose.translate(-0.191, 0, 0);
         }
 
         if (d == Direction.WEST) {
-            pose.translate(0, 0, -0.185);
+            pose.translate(0, 0, -0.200);
         }
 
         if (d == Direction.EAST) {
-            pose.translate(0, 0, -0.185);
+            pose.translate(0, 0, -0.200);
         }
 
-        pose.translate(0.5, 0.5646, 0.5);
-        pose.multiply(facing.rotation().rotationDegrees((float) Math.toRadians(0)));
+        pose.translate(0.5, 0.5356, 0.5);
+        pose.mulPose(facing.rotation().rotation((float) Math.toRadians(0)));
         pose.translate(-0.5, -0.5, -0.5);
 
-        RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
-        Tessellator tesselator = Tessellator.getInstance();
-        BufferBuilder builder = tesselator.getBuffer();
-        builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
-        Matrix4f mat = pose.peek().getPositionMatrix();
-        Matrix3f mat3f = pose.peek().getNormalMatrix();
+        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder builder = tesselator.getBuilder();
+        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        Matrix4f mat = pose.last().pose();
+        Matrix3f mat3f = pose.last().normal();
         Vec3i normal = face.facing.normal;
         for (BoxCorner corner : face.corners)
             builder.vertex(mat, box.get(corner.x), box.get(corner.y), box.get(corner.z))
-                    .texture(corner.isFacing(face.getTexU()) ? 1 : 0, corner.isFacing(face.getTexV()) ? 1 : 0).color(-1)
-                    .normal(mat3f, normal.getX(), normal.getY(), normal.getZ()).next();
-        tesselator.draw();
+                    .uv(corner.isFacing(face.getTexU()) ? 1 : 0, corner.isFacing(face.getTexV()) ? 1 : 0).color(-1)
+                    .normal(mat3f, normal.getX(), normal.getY(), normal.getZ()).endVertex();
+        tesselator.end();
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-        pose.pop();
+        pose.popPose();
 
         // Reset OpenGL state
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
-    }
-
-    @Override
-    public boolean rendersOutsideBoundingBox(TVBlockEntity blockEntity) {
-        return blockEntity.getSizeX() > 16 || blockEntity.getSizeY() > 16;
-    }
-
-    @Override
-    public boolean isInRenderDistance(TVBlockEntity blockEntity, Vec3d pos) {
-        return Vec3d.ofCenter(blockEntity.getPos()).isInRange(pos, 128);
     }
 }

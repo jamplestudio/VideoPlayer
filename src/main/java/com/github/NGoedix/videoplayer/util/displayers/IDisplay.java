@@ -4,7 +4,9 @@ import java.awt.*;
 
 public interface IDisplay {
 
-    int prepare(String url, float volume, float minDistance, float maxDistance, boolean playing, boolean loop, int tick);
+    String getUrl();
+
+    int prepare(String url, boolean playing, boolean loop, int tick);
 
     void tick(String url, float volume, float minDistance, float maxDistance, boolean playing, boolean loop, int tick);
 
@@ -12,11 +14,19 @@ public interface IDisplay {
         return 0;
     }
 
-    void pause(String url, float volume, float minDistance, float maxDistance, boolean playing, boolean loop, int tick);
+    void pause(int tick);
 
-    void resume(String url, float volume, float minDistance, float maxDistance, boolean playing, boolean loop, int tick);
+    void resume(int tick);
+
+    int getRenderTexture();
+
+    boolean isPlaying();
+
+    boolean isStopped();
 
     void release();
+
+    void stop();
 
     Dimension getDimensions();
 }

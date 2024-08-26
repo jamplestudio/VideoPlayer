@@ -3,11 +3,11 @@ package com.github.NGoedix.videoplayer.util.cache;
 import com.github.NGoedix.videoplayer.util.displayers.IDisplay;
 import com.github.NGoedix.videoplayer.util.displayers.ImageDisplayer;
 import com.github.NGoedix.videoplayer.util.displayers.VideoDisplayer;
-import com.github.NGoedix.videoplayer.util.math.Vec3d;
+import com.github.NGoedix.videoplayer.util.math.geo.Vec3d;
 import me.srrapero720.watermedia.api.image.ImageFetch;
 import me.srrapero720.watermedia.api.image.ImageRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.sound.SoundCategory;
+import net.minecraft.client.Minecraft;
+import net.minecraft.sounds.SoundSource;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TextureCache {
-    public static final Map<String, TextureCache> CACHE = new HashMap<>();
+    private static final Map<String, TextureCache> CACHE = new HashMap<>();
 
     public final String url;
     private volatile ImageFetch seeker;
@@ -42,6 +42,10 @@ public class TextureCache {
         return cache;
     }
 
+    public ImageRenderer getPicture() {
+        return picture;
+    }
+
     private synchronized void attemptToLoad() {
         if (this.seeker != null) return;
         if (!this.url.isEmpty()) {
@@ -50,13 +54,9 @@ public class TextureCache {
         }
     }
 
-    public IDisplay createDisplay(Vec3d pos, String url, float volume, float minDistance, float maxDistance, boolean loop, boolean playing) {
-        return createDisplay(pos, url, volume, minDistance, maxDistance, loop, playing, false);
-    }
-
-    public IDisplay createDisplay(Vec3d pos, String url, float volume, float minDistance, float maxDistance, boolean loop, boolean playing, boolean noVideo) {
-        volume *= MinecraftClient.getInstance().options.getSoundVolume(SoundCategory.MASTER);
-        if (picture == null && !noVideo) return VideoDisplayer.createVideoDisplay(pos, url, volume, minDistance, maxDistance, loop, playing);
+    public IDisplay createDisplay(Vec3d pos, String url, float volume, float minDistance, float maxDistance, boolean loop, boolean playing, boolean isOnlyMusic) {
+        volume *= Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MASTER);
+        if (picture == null) return VideoDisplayer.createVideoDisplay(pos, url, volume, minDistance, maxDistance, loop, playing, isOnlyMusic);
 
         return new ImageDisplayer(picture) {
             @Override
@@ -119,9 +119,9 @@ public class TextureCache {
         public FramePictureFetcher(TextureCache cache, String originalURL) {
             super(originalURL);
 
-            setOnSuccessCallback(imageRenderer -> MinecraftClient.getInstance().executeSync(() -> cache.process(imageRenderer)));
+            setOnSuccessCallback(imageRenderer -> Minecraft.getInstance().executeBlocking(() -> cache.process(imageRenderer)));
 
-            setOnFailedCallback(e -> MinecraftClient.getInstance().executeSync(() -> {
+            setOnFailedCallback(e -> Minecraft.getInstance().executeBlocking(() -> {
                 if (e instanceof NoPictureException) {
                     cache.processVideo();
                     return;

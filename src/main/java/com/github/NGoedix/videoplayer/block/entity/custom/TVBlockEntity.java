@@ -5,181 +5,80 @@ import com.github.NGoedix.videoplayer.block.entity.ModBlockEntities;
 import com.github.NGoedix.videoplayer.network.PacketHandler;
 import com.github.NGoedix.videoplayer.util.cache.TextureCache;
 import com.github.NGoedix.videoplayer.util.displayers.IDisplay;
-import com.github.NGoedix.videoplayer.util.math.AlignedBox;
-import com.github.NGoedix.videoplayer.util.math.Axis;
-import com.github.NGoedix.videoplayer.util.math.Facing;
-import com.github.NGoedix.videoplayer.util.math.Vec3d;
+import com.github.NGoedix.videoplayer.util.math.geo.AlignedBox;
+import com.github.NGoedix.videoplayer.util.math.geo.Axis;
+import com.github.NGoedix.videoplayer.util.math.geo.Facing;
+import com.github.NGoedix.videoplayer.util.math.geo.Vec3d;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.Level;
 
 import java.util.UUID;
 
 import static net.fabricmc.api.EnvType.CLIENT;
 
-public class TVBlockEntity extends BlockEntity {
-
-    private String url = "";
-    private boolean playing = false;
-    private int tick = 0;
-
-    public float volume = 1;
-
-    public float minDistance = 5;
-    public float maxDistance = 20;
-
-    public boolean loop = true;
+public class TVBlockEntity extends VideoPlayerBlockEntity {
 
     private UUID playerUsing;
 
-    @Environment(CLIENT)
-    public IDisplay display;
-
-    @Environment(CLIENT)
-    public TextureCache cache;
-
-
-    public TVBlockEntity(BlockPos pWorldPosition, BlockState pBlockState) {
-        super(ModBlockEntities.TV_BLOCK_ENTITY, pWorldPosition, pBlockState);
+    public TVBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.TV_BLOCK_ENTITY, pos, state, false);
     }
 
-    @Environment(CLIENT)
-    public boolean isURLEmpty() {
-        return url.isEmpty();
-    }
-
-    @Environment(CLIENT)
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-        this.world.updateListeners(this.pos, this.getCachedState(), this.getCachedState(), 3);
-    }
-
-    public void setVolume(int volume) {
-        this.volume = volume / 100F;
-        this.world.updateListeners(this.pos, this.getCachedState(), this.getCachedState(), 3);
-    }
-
-    public float getVolume() {
-        return volume;
-    }
-
-    public void setLoop(boolean loop) {
-        this.loop = loop;
-    }
-
-    public boolean isLoop() {
-        return loop;
-    }
-
-    public IDisplay requestDisplay() {
-        String url = getUrl();
-        if (cache == null || !cache.url.equals(url)) {
-            cache = TextureCache.get(url);
-            if (display != null)
-                display.release();
-            display = null;
-        }
-        if (!cache.isVideo() && (!cache.ready() || cache.getError() != null))
-            return null;
-        if (display != null)
-            return display;
-        return display = cache.createDisplay(new Vec3d(pos), url, volume, minDistance, maxDistance, loop, playing);
-    }
-
-    public void tryOpen(World level, BlockPos blockPos, PlayerEntity player) {
+    public void tryOpen(Level level, BlockPos blockPos, Player player) {
         // If none is using the block, open the GUI
         if (playerUsing == null) {
-            setBeingUsed(player.getUuid());
+            setBeingUsed(player.getUUID());
             openVideoManagerGUI(blockPos, player);
             return;
         }
 
         // If the player that use the block is connected, don't open the GUI
-        for (PlayerEntity p : level.getPlayers())
-            if (p.getUuid() == playerUsing)
+        for (Player p : level.players())
+            if (p.getUUID() == playerUsing)
                 return;
 
         // Open the GUI
         openVideoManagerGUI(blockPos, player);
     }
 
-    public void openVideoManagerGUI(BlockPos blockPos, PlayerEntity player) {
-        setBeingUsed(player.getUuid());
-        PacketHandler.sendS2COpenVideoManager((ServerPlayerEntity) player, blockPos, url, tick, (int) (volume * 100), loop);
+    public void openVideoManagerGUI(BlockPos blockPos, Player player) {
+        setBeingUsed(player.getUUID());
+        PacketHandler.sendS2COpenVideoManagerScreen((ServerPlayer) player, blockPos, getUrl(), getVolume(), getTick(), isPlaying());
     }
 
     public void setBeingUsed(UUID player) {
         this.playerUsing = player;
-        markDirty();
+        setChanged();
     }
 
     @Override
-    public BlockEntityUpdateS2CPacket toUpdatePacket() {
-        return BlockEntityUpdateS2CPacket.create(this);
-    }
-
-    public static void tick(World level, BlockPos pos, BlockState state, BlockEntity blockEntity) {
-        if (blockEntity instanceof TVBlockEntity be) {
-            if (level.isClient) {
-                IDisplay display = be.requestDisplay();
-                if (display != null)
-                    display.tick(be.url, be.volume, be.minDistance, be.maxDistance, be.playing, be.loop, be.tick);
-            }
-            if (be.playing)
-                be.tick++;
-            level.setBlockState(pos, state.with(TVBlock.LIT, be.playing), 3);
-        }
+    protected void saveAdditional(CompoundTag nbt) {
+        super.saveAdditional(nbt);
+        nbt.putUUID("beingUsed", playerUsing == null ? new UUID(0, 0) : playerUsing);
     }
 
     @Override
-    public void markRemoved() {
-        if (isClient() && display != null)
-            display.release();
-    }
-
-    public boolean isClient() {
-        return this.world != null && this.world.isClient;
-    }
-
-    @Override
-    protected void writeNbt(NbtCompound nbt) {
-        super.writeNbt(nbt);
-
-        nbt.putString("url", url == null ? "" : url);
-        nbt.putUuid("beingUsed", playerUsing == null ? new UUID(0, 0) : playerUsing);
-        nbt.putBoolean("playing", playing);
-        nbt.putInt("tick", tick);
-        nbt.putFloat("volume", volume);
-    }
-
-    @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void load(CompoundTag nbt) {
+        super.load(nbt);
 
         loadFromNBT(nbt);
     }
 
-    private void loadFromNBT(NbtCompound nbt) {
-        url = nbt.getString("url");
-        playerUsing = nbt.getUuid("beingUsed");
-        playing = nbt.getBoolean("playing");
-        tick = nbt.getInt("tick");
-        volume = nbt.getFloat("volume");
+    @Override
+    protected void loadFromNBT(CompoundTag nbt) {
+        playerUsing = nbt.getUUID("beingUsed");
     }
 
     public void notifyPlayer() {
-        PacketHandler.sendS2CFrameVideo(getWorld().getWorldChunk(getPos()), getPos(), playing, tick);
+        PacketHandler.sendS2CFrameVideoMessage(getLevel().getChunkAt(getBlockPos()), getUrl(), getBlockPos(), isPlaying(), getTick());
     }
 
     public float getSizeX() {
@@ -187,11 +86,11 @@ public class TVBlockEntity extends BlockEntity {
     }
 
     public float getSizeY() {
-        return 0.85F;
+        return 0.77F;
     }
 
     public AlignedBox getBox() {
-        Direction direction = getCachedState().get(TVBlock.FACING);
+        Direction direction = getBlockState().getValue(TVBlock.FACING);
         Facing facing = Facing.get(direction);
         AlignedBox box = TVBlock.box(direction);
 
@@ -211,19 +110,9 @@ public class TVBlockEntity extends BlockEntity {
         return box;
     }
 
-    public boolean isPlaying() {
-        return playing;
-    }
-
-    public void setPlaying(boolean playing) {
-        this.playing = playing;
-    }
-
-    public int getTick() {
-        return tick;
-    }
-
-    public void setTick(int tick) {
-        this.tick = tick;
+    @Override
+    public void tick() {
+        super.tick();
+        level.setBlock(getBlockPos(), getBlockState().setValue(TVBlock.LIT, isPlaying()), 3);
     }
 }

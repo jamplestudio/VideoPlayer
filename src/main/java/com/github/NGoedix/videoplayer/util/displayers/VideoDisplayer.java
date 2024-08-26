@@ -1,97 +1,100 @@
 package com.github.NGoedix.videoplayer.util.displayers;
 
-import com.github.NGoedix.videoplayer.util.MemoryTracker;
 import com.github.NGoedix.videoplayer.util.cache.TextureCache;
-import com.github.NGoedix.videoplayer.util.math.Vec3d;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.github.NGoedix.videoplayer.util.math.VideoMathUtil;
+import com.github.NGoedix.videoplayer.util.math.geo.Vec3d;
 import me.lib720.watermod.safety.TryCore;
+import me.srrapero720.watermedia.api.math.MathAPI;
+import me.srrapero720.watermedia.api.player.SyncBasePlayer;
+import me.srrapero720.watermedia.api.player.SyncMusicPlayer;
 import me.srrapero720.watermedia.api.player.SyncVideoPlayer;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 public class VideoDisplayer implements IDisplay {
 
     private static final String VLC_FAILED = "https://i.imgur.com/XCcN2uX.png";
 
-    private static final int ACCEPTABLE_SYNC_TIME = 1000;
+    private static final int ACCEPTABLE_SYNC_TIME = 1500;
 
     private static final List<VideoDisplayer> OPEN_DISPLAYS = new ArrayList<>();
 
+    private boolean stream = false;
+
     public static void tick() {
         synchronized (OPEN_DISPLAYS) {
-            for (var display: OPEN_DISPLAYS) {
-                if (MinecraftClient.getInstance().isPaused()) {
-                    var media = display.player;
-                    if (media.isPlaying() && display.player.isLive()) media.setPauseMode(true);
-                    else if (media.getDuration() > 0 && media.isPlaying()) media.setPauseMode(true);
-                }
-            }
+            OPEN_DISPLAYS.forEach(VideoDisplayer::pauseIfNecessary);
+        }
+    }
+
+    private static void pauseIfNecessary(VideoDisplayer display) {
+        if (Minecraft.getInstance().isPaused() && display.player.isPlaying() && (display.player.isLive() || display.player.getDuration() > 0)) {
+            display.player.setPauseMode(true);
         }
     }
 
     public static void unload() {
         synchronized (OPEN_DISPLAYS) {
-            for (var display : OPEN_DISPLAYS) display.free();
+            OPEN_DISPLAYS.forEach(VideoDisplayer::free);
             OPEN_DISPLAYS.clear();
         }
     }
 
-    public static IDisplay createVideoDisplay(Vec3d pos, String url, float volume, float minDistance, float maxDistance, boolean loop, boolean playing) {
+    public static IDisplay createVideoDisplay(Vec3d pos, String url, float volume, float minDistance, float maxDistance, boolean loop, boolean playing, boolean isOnlyMusic) {
+        TextureCache cache = TextureCache.get(VLC_FAILED);
+
         return TryCore.withReturn((defaultVar) -> {
-            var display = new VideoDisplayer(pos, url, volume, minDistance, maxDistance, loop);
-            if (display.player.raw() == null) throw new IllegalStateException("MediaDisplay uses a broken player");
+            VideoDisplayer display = new VideoDisplayer(pos, url, volume, minDistance, maxDistance, loop, isOnlyMusic);
+            if (display.player.raw() == null) throw new IllegalStateException("VideoDisplayer uses a broken player");
             OPEN_DISPLAYS.add(display);
             return display;
-
-        }, ((Supplier<IDisplay>) () -> {
-            var cache = TextureCache.get(VLC_FAILED);
-            if (cache.ready()) return cache.createDisplay(pos, VLC_FAILED, volume, minDistance, maxDistance, loop, playing);
-            return null;
-        }).get());
+        }, cache.ready() ? (IDisplay) new ImageDisplayer(cache.getPicture()) : null);
     }
 
-    public SyncVideoPlayer player;
+    public SyncBasePlayer player;
 
     private final Vec3d pos;
+    private String url;
     private float lastSetVolume;
     private long lastCorrectedTime = Long.MIN_VALUE;
 
-    public VideoDisplayer(Vec3d pos, String url, float volume, float minDistance, float maxDistance, boolean loop) {
-        super();
+    public VideoDisplayer(Vec3d pos, String url, float volume, float minDistance, float maxDistance, boolean loop, boolean isOnlyMusic) {
         this.pos = pos;
+        this.url = url;
 
-        if (url.isBlank()) return;
-
-        player = new SyncVideoPlayer(null, MinecraftClient.getInstance(), MemoryTracker::create);
-        volume = pos != null ? getVolume(volume, minDistance, maxDistance) : volume;
-        player.setVolume((int) volume);
-        lastSetVolume = volume;
-        player.setRepeatMode(loop);
-        player.start(url);
+        if (!url.isEmpty()) {
+            if (isOnlyMusic) {
+                player = new SyncMusicPlayer();
+            } else {
+                player = new SyncVideoPlayer(null, Minecraft.getInstance());
+            }
+            adjustVolume(volume, minDistance, maxDistance);
+            player.setRepeatMode(loop);
+            player.start(url);
+        }
     }
 
-    public int getVolume(float volume, float minDistance, float maxDistance) {
-        if (player == null)
-            return 0;
-        MinecraftClient mc = MinecraftClient.getInstance();
-        float distance = (float) pos.distance(Objects.requireNonNull(mc.player).getLeashPos(mc.isPaused() ? 1.0F : mc.getTickDelta()));
-        if (minDistance > maxDistance) {
-            float temp = maxDistance;
-            maxDistance = minDistance;
-            minDistance = temp;
-        }
+    private void adjustVolume(float volume, float minDistance, float maxDistance) {
+        volume = pos != null ? calculateVolume(volume, minDistance, maxDistance) : volume;
+        player.setVolume((int) volume);
+        lastSetVolume = volume;
+    }
 
-        if (distance > minDistance)
-            if (distance > maxDistance)
-                volume = 0;
-            else
-                volume *= 1 - ((distance - minDistance) / (maxDistance - minDistance));
-        return (int) (volume * 100F);
+    private int calculateVolume(float volume, float minDistance, float maxDistance) {
+        if (player == null) return 0;
+        Minecraft mc = Minecraft.getInstance();
+        float distance = (float) pos.distance(Objects.requireNonNull(Minecraft.getInstance().player).getPosition(mc.isPaused() ? 1.0F : mc.getFrameTime()));
+        volume = VideoMathUtil.calculateVolume(volume, distance, minDistance, maxDistance);
+        return (int) volume;
+    }
+
+    @Override
+    public String getUrl() {
+        return url;
     }
 
     @Override
@@ -99,39 +102,50 @@ public class VideoDisplayer implements IDisplay {
         if (player == null || url == null)
             return;
 
-        volume = pos != null ? getVolume(volume, minDistance, maxDistance) : volume;
+        this.url = url;
+        volume = pos != null ? calculateVolume(volume, minDistance, maxDistance) : volume;
         if (volume != lastSetVolume) {
             player.setVolume((int) volume);
             lastSetVolume = volume;
         }
 
-        if (player.isValid()) {
-            boolean realPlaying = playing && !MinecraftClient.getInstance().isPaused();
+        if (player.isSafeUse() && player.isValid()) {
+            if (!stream && player.isLive()) stream = true;
 
-            if (player.getRepeatMode() != loop)
-                player.setRepeatMode(loop);
-            long tickTime = 50;
-            if (player.isLive()) {
-                if (player.isPlaying() != realPlaying)
-                    player.setPauseMode(!realPlaying);
-            } else {
-                if (player.getDuration() > 0) {
-                    if (player.isPlaying() != realPlaying)
-                        player.setPauseMode(!realPlaying);
+            boolean currentPlaying = playing && !Minecraft.getInstance().isPaused();
 
-                    if (player.isSeekAble()) {
-                        MinecraftClient mc = MinecraftClient.getInstance();
-                        long time = tick * tickTime + (realPlaying ? (long) (mc.isPaused() ? 1.0F : mc.getTickDelta() * tickTime) : 0);
-                        if (time > player.getTime() && loop)
-                            time %= player.getDuration();
-                        if (Math.abs(time - player.getTime()) > ACCEPTABLE_SYNC_TIME && Math.abs(time - lastCorrectedTime) > ACCEPTABLE_SYNC_TIME) {
-                            lastCorrectedTime = time;
-                            player.seekTo(time);
-                        }
-                    }
+            player.setPauseMode(!currentPlaying);
+            if (!stream && player.isSeekAble()) {
+                long time = MathAPI.tickToMs(tick);
+                if (time > player.getTime()) time = floorMod(time, player.getMediaInfoDuration());
+
+                if (Math.abs(time - player.getTime()) > ACCEPTABLE_SYNC_TIME && Math.abs(time - lastCorrectedTime) > ACCEPTABLE_SYNC_TIME) {
+                    lastCorrectedTime = time;
+                    player.seekTo(time);
                 }
             }
         }
+    }
+
+    public static long floorMod(long x, long y) {
+        try {
+            final long r = x % y;
+            if ((x ^ y) < 0 && r != 0)
+                return r + y;
+            return r;
+        } catch (ArithmeticException e) {
+            return 0;
+        }
+    }
+
+    @Override
+    public boolean isPlaying() {
+        return player.isPlaying() || player.isPaused();
+    }
+
+    @Override
+    public boolean isStopped() {
+        return player.isStopped() || player.isEnded();
     }
 
     @Override
@@ -140,17 +154,26 @@ public class VideoDisplayer implements IDisplay {
     }
 
     @Override
-    public int prepare(String url, float volume, float minDistance, float maxDistance, boolean playing, boolean loop, int tick) {
+    public int prepare(String url, boolean playing, boolean loop, int tick) {
         if (player == null) return -1;
-        return player.prepareTexture();
+        this.url = url;
+        if (player instanceof SyncVideoPlayer)
+            return ((SyncVideoPlayer) player).getGlTexture();
+
+        return 0;
+    }
+
+    @Override
+    public int getRenderTexture() {
+        if (player instanceof SyncVideoPlayer)
+            return ((SyncVideoPlayer) player).getGlTexture();
+
+        return 0;
     }
 
     public void free() {
         if (player != null) {
             player.release();
-            if (player.getTexture() != -1) {
-                GlStateManager._deleteTexture(player.getTexture());
-            }
             player = null;
         }
     }
@@ -164,22 +187,33 @@ public class VideoDisplayer implements IDisplay {
     }
 
     @Override
-    public void pause(String url, float volume, float minDistance, float maxDistance, boolean playing, boolean loop, int tick) {
+    public void stop() {
         if (player == null) return;
-        player.seekTo(tick);
+        player.stop();
+    }
+
+    @Override
+    public void pause(int tick) {
+        if (player == null) return;
+        if (tick != -1)
+            player.seekTo(tick);
         player.pause();
     }
 
     @Override
-    public void resume(String url, float volume, float minDistance, float maxDistance, boolean playing, boolean loop, int tick) {
+    public void resume(int tick) {
         if (player == null) return;
-        player.seekTo(tick);
+        if (tick != -1)
+            player.seekTo(tick);
         player.play();
     }
 
     @Override
     public Dimension getDimensions() {
         if (player == null) return null;
-        return player.getDimensions();
+        if (player instanceof SyncVideoPlayer)
+            return ((SyncVideoPlayer) player).getDimensions();
+
+        return null;
     }
 }

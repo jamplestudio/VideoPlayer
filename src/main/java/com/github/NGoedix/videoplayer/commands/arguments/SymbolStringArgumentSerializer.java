@@ -1,36 +1,37 @@
 package com.github.NGoedix.videoplayer.commands.arguments;
 
 import com.google.gson.JsonObject;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.argument.serialize.ArgumentSerializer;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.synchronization.ArgumentTypeInfo;
+import net.minecraft.network.FriendlyByteBuf;
 
-public class SymbolStringArgumentSerializer implements ArgumentSerializer<SymbolStringArgumentType, SymbolStringArgumentSerializer.Template> {
+public class SymbolStringArgumentSerializer implements ArgumentTypeInfo<SymbolStringArgumentType, SymbolStringArgumentSerializer.Template> {
 
-   @Override
-   public void writePacket(Template properties, PacketByteBuf buf) {}
+   public void serializeToNetwork(Template pTemplate, FriendlyByteBuf pBuffer) {
+      // No specific data to serialize for this type, so this method does nothing.
+   }
 
-   @Override
-   public Template fromPacket(PacketByteBuf buf) {
+   public Template deserializeFromNetwork(FriendlyByteBuf pBuffer) {
+      // No specific data to deserialize for this type, so just return a new template.
       return new Template();
    }
 
-   @Override
-   public void writeJson(Template properties, JsonObject json) {}
+   public void serializeToJson(Template pTemplate, JsonObject pJson) {
+      // No specific data to serialize for this type, so this method does nothing.
+   }
 
-   @Override
-   public Template getArgumentTypeProperties(SymbolStringArgumentType argumentType) {
+   public Template unpack(SymbolStringArgumentType pArgument) {
+      // No specific data to unpack for this type, so just return a new template.
       return new Template();
    }
 
-   public final class Template implements ArgumentSerializer.ArgumentTypeProperties<SymbolStringArgumentType> {
-      @Override
-      public SymbolStringArgumentType createType(CommandRegistryAccess commandRegistryAccess) {
+   public final class Template implements ArgumentTypeInfo.Template<SymbolStringArgumentType> {
+
+      public SymbolStringArgumentType instantiate(CommandBuildContext pContext) {
          return SymbolStringArgumentType.symbolString();
       }
 
-      @Override
-      public ArgumentSerializer<SymbolStringArgumentType, ?> getSerializer() {
+      public ArgumentTypeInfo<SymbolStringArgumentType, ?> type() {
          return SymbolStringArgumentSerializer.this;
       }
    }

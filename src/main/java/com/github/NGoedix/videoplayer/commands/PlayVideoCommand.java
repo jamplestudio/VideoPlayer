@@ -1,6 +1,5 @@
 package com.github.NGoedix.videoplayer.commands;
 
-import com.github.NGoedix.videoplayer.Constants;
 import com.github.NGoedix.videoplayer.commands.arguments.SymbolStringArgumentType;
 import com.github.NGoedix.videoplayer.network.PacketHandler;
 import com.mojang.brigadier.Command;
@@ -10,44 +9,46 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Collection;
 
 public class PlayVideoCommand {
 
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment){
-        dispatcher.register(CommandManager.literal("playvideo")
-                .requires((command)-> command.hasPermissionLevel(2))
-                .then(CommandManager.argument("target", EntityArgumentType.players())
-                        .then(CommandManager.argument("volume", IntegerArgumentType.integer(0, 100))
-                                .then(CommandManager.argument("url", SymbolStringArgumentType.symbolString())
-                                        .executes(e -> PlayVideoCommand.execute(e, false))
-                                        .then(CommandManager.argument("control_blocked", BoolArgumentType.bool())
-                                                .executes(e-> PlayVideoCommand.execute(e, true)))))));
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registryAccess, Commands.CommandSelection environment) {
+        dispatcher.register(Commands.literal("playvideo")
+                .requires(source -> source.hasPermission(2))
+                .then(Commands.argument("target", EntityArgument.players())
+                        .then(Commands.argument("volume", IntegerArgumentType.integer(0, 100))
+                                .then(Commands.argument("url", SymbolStringArgumentType.symbolString()) // Making url argument mandatory
+                                        .executes(e -> PlayVideoCommand.execute(e, false, false)) // This executes if blocked argument is not provided
+                                        .then(Commands.argument("control_blocked", BoolArgumentType.bool()) // Making blocked argument optional
+                                                .executes(e -> PlayVideoCommand.execute(e, true, false))
+                                                .then(Commands.argument("can_skip", BoolArgumentType.bool())
+                                                        .executes(e -> PlayVideoCommand.execute(e, true, true)))))))); // This executes if blocked argument is provided
     }
 
-    private static int execute(CommandContext<ServerCommandSource> command, boolean control){
-        Collection<ServerPlayerEntity> players;
+    private static int execute(CommandContext<CommandSourceStack> command, boolean controlBlockedInCommand, boolean skipInCommand) {
+        Collection<ServerPlayer> players;
 
         try {
-            players = EntityArgumentType.getPlayers(command, "target");
+            players = EntityArgument.getPlayers(command, "target");
         } catch (CommandSyntaxException e) {
-            command.getSource().sendError(Text.of("Error with target parameter."));
+            command.getSource().sendFailure(Component.literal("Error with target parameter."));
             return Command.SINGLE_SUCCESS;
         }
 
-        for (ServerPlayerEntity player : players) {
-            PacketHandler.sendS2CSendVideo(
-                    player,
-                    StringArgumentType.getString(command, "url"),
-                    IntegerArgumentType.getInteger(command, "volume"),
-                    control && BoolArgumentType.getBool(command, "control_blocked")
+        for (ServerPlayer player : players) {
+            PacketHandler.sendS2CSendVideoStart(player,
+                            StringArgumentType.getString(command, "url"),
+                            IntegerArgumentType.getInteger(command, "volume"),
+                            controlBlockedInCommand && BoolArgumentType.getBool(command, "control_blocked"),
+                            !skipInCommand || BoolArgumentType.getBool(command, "can_skip")
             );
         }
 
