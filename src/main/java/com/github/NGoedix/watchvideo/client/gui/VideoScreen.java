@@ -99,7 +99,8 @@ public class VideoScreen extends Screen {
             float t = tick / (float) (optionInSecs * 20);
             fadeLevel = (float) applyEasing(optionInMode, 0, 1, t);
             if (!started && fadeLevel >= 1.0) {
-                player.play();
+                if (player.isSafeUse())
+                    player.play();
                 started = true;
                 fadeLevel = 0;
             }
@@ -111,6 +112,7 @@ public class VideoScreen extends Screen {
                 System.out.println("Closing without fading out");
                 onClose();
             }
+
             if (optionInMode != -1 || closing) {
                 closing = true;
                 if (closingOnTick == -1) closingOnTick = tick + optionOutSecs * 20;

@@ -133,7 +133,8 @@ public class Display {
         if (player == null) return;
         if (tick != -1)
             player.seekTo(tick);
-        player.play();
+        if (player.isSafeUse())
+            player.play();
     }
 
     public void seekTo(long tick) {
