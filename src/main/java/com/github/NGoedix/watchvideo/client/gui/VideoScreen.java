@@ -2,6 +2,7 @@ package com.github.NGoedix.watchvideo.client.gui;
 
 import com.github.NGoedix.watchvideo.Reference;
 import com.github.NGoedix.watchvideo.VideoPlayer;
+import com.github.NGoedix.watchvideo.util.math.VideoDimensionInfo;
 import com.github.NGoedix.watchvideo.util.math.VideoMathUtil;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -37,7 +38,7 @@ public class VideoScreen extends Screen {
     private float fadeStep10 = 0;
     private float fadeStep5 = 0;
     private boolean started;
-    private boolean closing = false;
+    private boolean closing, finished = false;
     private float volume;
 
     // CONTROL
@@ -180,33 +181,13 @@ public class VideoScreen extends Screen {
 
         // Get video dimensions
         Dimension videoDimensions = player.dimension();
-        double videoWidth = videoDimensions.getWidth();
-        double videoHeight = videoDimensions.getHeight();
-
-        // Calculate aspect ratios for both the screen and the video
-        float screenAspectRatio = (float) width / height;
-        float videoAspectRatio = (float) ((float) videoWidth / videoHeight);
-
-        // New dimensions for rendering video texture
-        int renderWidth, renderHeight;
-
-        // If video's aspect ratio is greater than screen's, it means video's width needs to be scaled down to screen's width
-        if(videoAspectRatio > screenAspectRatio) {
-            renderWidth = width;
-            renderHeight = (int) (width / videoAspectRatio);
-        } else {
-            renderWidth = (int) (height * videoAspectRatio);
-            renderHeight = height;
-        }
-
-        int xOffset = (width - renderWidth) / 2; // xOffset for centering the video
-        int yOffset = (height - renderHeight) / 2; // yOffset for centering the video
+        VideoDimensionInfo info = VideoMathUtil.calculateAspectRatio(width, height, (int) videoDimensions.getWidth(), (int) videoDimensions.getHeight());
 
         RenderSystem.enableBlend();
         RenderSystem.clearColor(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-        AbstractGui.blit(stack, xOffset, yOffset, 0.0F, 0.0F, renderWidth, renderHeight, renderWidth, renderHeight);
+        AbstractGui.blit(stack, info.getOffsetX(), info.getOffsetY(), 0.0F, 0.0F, info.getWidth(), info.getHeight(), info.getWidth(), info.getHeight());
         RenderSystem.disableBlend();
     }
 
@@ -337,7 +318,12 @@ public class VideoScreen extends Screen {
             player.stop();
             player.release();
             Minecraft.getInstance().getSoundManager().resume();
+            finished = true;
         }
+    }
+
+    public boolean isFinished() {
+        return finished;
     }
 
     @Override

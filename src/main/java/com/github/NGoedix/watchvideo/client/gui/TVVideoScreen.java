@@ -1,13 +1,14 @@
 package com.github.NGoedix.watchvideo.client.gui;
 
 import com.github.NGoedix.watchvideo.Reference;
-import com.github.NGoedix.watchvideo.VideoPlayer;
 import com.github.NGoedix.watchvideo.block.entity.custom.TVBlockEntity;
 import com.github.NGoedix.watchvideo.client.gui.components.CustomSlider;
 import com.github.NGoedix.watchvideo.client.gui.components.ImageButtonHoverable;
 import com.github.NGoedix.watchvideo.network.PacketHandler;
 import com.github.NGoedix.watchvideo.network.message.UploadVideoUpdateMessage;
 import com.github.NGoedix.watchvideo.util.displayers.Display;
+import com.github.NGoedix.watchvideo.util.math.VideoDimensionInfo;
+import com.github.NGoedix.watchvideo.util.math.VideoMathUtil;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -242,38 +243,17 @@ public class TVVideoScreen extends Screen {
             RenderSystem.enableBlend();
             fill(pPoseStack, leftPos + (imageWidth / 2) - (videoWidth / 2), topPos + 10, leftPos + (imageWidth / 2) - (videoWidth / 2) + videoWidth, topPos + 10 + videoHeight, MathAPI.argb(255, 0, 0, 0));
             RenderSystem.disableBlend();
-
             RenderSystem.bindTexture(textureId);
 
-            // Get video dimensions
+            // Get dimension and get aspect ratio details
             Dimension videoDimensions = display.getDimensions();
-            double nativeVideoWidth = videoDimensions.getWidth();
-            double nativeVideoHeight = videoDimensions.getHeight();
-
-            // Calculate aspect ratios for both the screen and the video
-            float screenAspectRatio = (float) videoWidth / videoHeight;
-            float videoAspectRatio = (float) ((float) nativeVideoWidth / nativeVideoHeight);
-
-            // New dimensions for rendering video texture
-            int renderWidth, renderHeight;
-
-            // If video's aspect ratio is greater than screen's, it means video's width needs to be scaled down to screen's width
-            if(videoAspectRatio > screenAspectRatio) {
-                renderWidth = videoWidth;
-                renderHeight = (int) (videoWidth / videoAspectRatio);
-            } else {
-                renderWidth = (int) (videoHeight * videoAspectRatio);
-                renderHeight = videoHeight;
-            }
-
-            int xOffset = (videoWidth - renderWidth) / 2; // xOffset for centering the video
-            int yOffset = (videoHeight - renderHeight) / 2; // yOffset for centering the video
+            VideoDimensionInfo info = VideoMathUtil.calculateAspectRatio(videoWidth, videoHeight, (int) videoDimensions.getWidth(), (int) videoDimensions.getHeight());
 
             RenderSystem.enableBlend();
             RenderSystem.clearColor(1.0F, 1.0F, 1.0F, 1.0F);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            AbstractGui.blit(pPoseStack, leftPos + (imageWidth / 2) - (videoWidth / 2) + xOffset, topPos + 10 + yOffset, 0.0F, 0.0F, renderWidth, renderHeight, renderWidth, renderHeight);
+            AbstractGui.blit(pPoseStack, leftPos + (imageWidth / 2) - (videoWidth / 2) + info.getOffsetX(), topPos + 10 + info.getOffsetY(), 0.0F, 0.0F, info.getWidth(), info.getHeight(), info.getWidth(), info.getHeight());
             RenderSystem.disableBlend();
         }
     }
