@@ -24,13 +24,13 @@ public class ClientHandler {
     public static VideoScreen videoScreen;
 
     public static void openVideo(String url, int volume, boolean isControlBlocked, boolean canSkip) {
-        if (videoScreen != null) videoScreen.onClose();
-        Minecraft.getInstance().setScreen(new VideoScreen(url, volume, isControlBlocked, canSkip, false));
+        if (videoScreen == null || videoScreen.isFinished())
+            Minecraft.getInstance().setScreen(new VideoScreen(url, volume, isControlBlocked, canSkip, false));
     }
 
     public static void openVideo(String url, int volume, boolean isControlBlocked, boolean canSkip, int optionInMode, int optionInSecs, int optionOutMode, int optionOutSecs) {
-        if (videoScreen != null) videoScreen.onClose();
-        Minecraft.getInstance().setScreen(new VideoScreen(url, volume, isControlBlocked, canSkip, optionInMode, optionInSecs, optionOutMode, optionOutSecs));
+        if (videoScreen == null || videoScreen.isFinished())
+            Minecraft.getInstance().setScreen(new VideoScreen(url, volume, isControlBlocked, canSkip, optionInMode, optionInSecs, optionOutMode, optionOutSecs));
     }
 
     public static void playMusic(String url, int volume) {
