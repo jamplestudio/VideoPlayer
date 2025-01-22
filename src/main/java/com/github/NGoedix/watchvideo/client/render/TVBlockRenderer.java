@@ -2,12 +2,11 @@ package com.github.NGoedix.watchvideo.client.render;
 
 import com.github.NGoedix.watchvideo.block.custom.TVBlock;
 import com.github.NGoedix.watchvideo.block.entity.custom.TVBlockEntity;
-import com.github.NGoedix.watchvideo.util.displayers.IDisplay;
+import com.github.NGoedix.watchvideo.util.displayers.Display;
 import com.github.NGoedix.watchvideo.util.math.geo.*;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import me.srrapero720.watermedia.api.image.ImageAPI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -20,6 +19,7 @@ import net.minecraft.util.math.vector.Matrix3f;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3i;
 import org.lwjgl.opengl.GL11;
+import org.watermedia.api.image.ImageAPI;
 
 import java.awt.*;
 
@@ -36,14 +36,14 @@ public class TVBlockRenderer extends TileEntityRenderer<TVBlockEntity> {
             return;
         }
 
-        IDisplay display = frame.requestDisplay();
+        Display display = frame.requestDisplay();
         if (display == null) {
             if (!frame.isPlaying()) return;
             renderTexture(frame, null, ImageAPI.loadingGif().texture((int) (Minecraft.getInstance().level.getGameTime()), 1, true), pose, true);
             return;
         }
 
-        int texture = display.prepare(frame.getUrl(), frame.isPlaying(), true, frame.getTick());
+        int texture = display.renderTexture();
 
         if (texture == -1) {
             return;
@@ -58,7 +58,7 @@ public class TVBlockRenderer extends TileEntityRenderer<TVBlockEntity> {
         return frame.getSizeX() > 16 || frame.getSizeY() > 16;
     }
 
-    private void renderTexture(TVBlockEntity frame, IDisplay display, int texture, MatrixStack pose, boolean aspectRatio) {
+    private void renderTexture(TVBlockEntity frame, Display display, int texture, MatrixStack pose, boolean aspectRatio) {
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);

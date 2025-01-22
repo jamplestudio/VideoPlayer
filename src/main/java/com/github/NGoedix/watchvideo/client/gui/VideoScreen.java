@@ -6,11 +6,6 @@ import com.github.NGoedix.watchvideo.util.math.VideoMathUtil;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import me.lib720.caprica.vlcj.player.base.State;
-import me.srrapero720.watermedia.api.image.ImageAPI;
-import me.srrapero720.watermedia.api.image.ImageRenderer;
-import me.srrapero720.watermedia.api.math.MathAPI;
-import me.srrapero720.watermedia.api.player.SyncVideoPlayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.screen.Screen;
@@ -18,8 +13,12 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.loading.FMLLoader;
 import org.lwjgl.opengl.GL11;
+import org.watermedia.api.image.ImageAPI;
+import org.watermedia.api.image.ImageRenderer;
+import org.watermedia.api.math.MathAPI;
 
 import java.awt.*;
+import java.net.URI;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -50,7 +49,7 @@ public class VideoScreen extends Screen {
     private int optionOutSecs;
 
     // TOOLS
-    private final SyncVideoPlayer player;
+    private final org.watermedia.api.player.videolan.VideoPlayer player;
 
     // VIDEO INFO
     private int videoTexture = -1;
@@ -77,22 +76,22 @@ public class VideoScreen extends Screen {
         this.optionOutMode = -1;
         this.optionOutSecs = -1;
 
-        this.player = new SyncVideoPlayer(null, minecraft);
+        this.player = new org.watermedia.api.player.videolan.VideoPlayer(minecraft);
         Reference.LOGGER.info("Playing video (" + (!controlBlocked ? "not" : "") + "blocked) (" + url + " with volume: " + (int) (minecraft.options.getSoundSourceVolume(SoundCategory.MASTER) * volume));
 
         player.setVolume((int) (minecraft.options.getSoundSourceVolume(SoundCategory.MASTER) * volume));
         if (!fadeIn) {
             started = true;
-            player.start(url);
+            player.start(URI.create(url));
         } else {
-            player.startPaused(url);
+            player.startPaused(URI.create(url));
         }
     }
 
     @Override
     public void render(MatrixStack stack, int pMouseX, int pMouseY, float pPartialTicks) {
         if (started && !closing) {
-            videoTexture = player.getGlTexture();
+            videoTexture = player.preRender();
         }
 
         // Handle easing for fade-in
@@ -155,7 +154,8 @@ public class VideoScreen extends Screen {
 
         // DEBUG RENDERING
         if (!FMLLoader.isProduction()) {
-            draw(stack, String.format("State: %s", player.getRawPlayerState().name()), getHeightCenter(-12));
+            if (!player.isReady()) return;
+            draw(stack, String.format("State: %s", player.raw().mediaPlayer().media().info().state().toString()), getHeightCenter(-12));
             draw(stack, String.format("Time: %s (%s) / %s (%s)", FORMAT.format(new Date(player.getTime())), player.getTime(), FORMAT.format(new Date(player.getDuration())), player.getDuration()), getHeightCenter(0));
             draw(stack, String.format("Media Duration: %s (%s)", FORMAT.format(new Date(player.getMediaInfoDuration())), player.getMediaInfoDuration()), getHeightCenter(12));
         }
@@ -168,7 +168,7 @@ public class VideoScreen extends Screen {
     }
 
     private void renderTexture(MatrixStack stack, int texture) {
-        if (player.getDimensions() == null) return; // Checking if video available
+        if (player.dimension() == null) return; // Checking if video available
 
         RenderSystem.enableBlend();
         fill(stack, 0, 0, width, height, MathAPI.argb(255, 0, 0, 0));
@@ -177,7 +177,7 @@ public class VideoScreen extends Screen {
         RenderSystem.bindTexture(texture);
 
         // Get video dimensions
-        Dimension videoDimensions = player.getDimensions();
+        Dimension videoDimensions = player.dimension();
         double videoWidth = videoDimensions.getWidth();
         double videoHeight = videoDimensions.getHeight();
 
@@ -333,9 +333,8 @@ public class VideoScreen extends Screen {
         if (started) {
             started = false;
             player.stop();
-            Minecraft.getInstance().getSoundManager().resume();
-            GlStateManager._deleteTexture(videoTexture);
             player.release();
+            Minecraft.getInstance().getSoundManager().resume();
         }
     }
 

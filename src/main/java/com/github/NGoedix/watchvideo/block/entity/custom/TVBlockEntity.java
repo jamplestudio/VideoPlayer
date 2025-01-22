@@ -5,6 +5,8 @@ import com.github.NGoedix.watchvideo.block.entity.ModBlockEntities;
 import com.github.NGoedix.watchvideo.network.PacketHandler;
 import com.github.NGoedix.watchvideo.network.message.FrameVideoMessage;
 import com.github.NGoedix.watchvideo.network.message.OpenVideoManagerScreen;
+import com.github.NGoedix.watchvideo.network.message.RadioMessage;
+import com.github.NGoedix.watchvideo.util.displayers.Display;
 import com.github.NGoedix.watchvideo.util.math.geo.AlignedBox;
 import com.github.NGoedix.watchvideo.util.math.geo.Axis;
 import com.github.NGoedix.watchvideo.util.math.geo.Facing;
@@ -22,7 +24,7 @@ public class TVBlockEntity extends VideoPlayerBlockEntity {
     private UUID playerUsing;
 
     public TVBlockEntity() {
-        super(ModBlockEntities.TV_BLOCK_ENTITY.get(), false);
+        super(ModBlockEntities.TV_BLOCK_ENTITY.get(), Display.DisplayType.VIDEO);
     }
 
     public void tryOpen(World level, BlockPos blockPos, PlayerEntity player) {
@@ -73,7 +75,8 @@ public class TVBlockEntity extends VideoPlayerBlockEntity {
 
     public void notifyPlayer() {
         if (this.level == null) return;
-        PacketHandler.sendToClient(new FrameVideoMessage(getUrl(), worldPosition, isPlaying(), getTick()), level, worldPosition);
+        if (!this.level.isClientSide)
+            PacketHandler.sendToClient(new FrameVideoMessage(getUrl(), worldPosition, isPlaying(), getTick()), level, worldPosition);
     }
 
     public float getSizeX() {

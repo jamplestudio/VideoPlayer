@@ -33,8 +33,8 @@ public class TVBlock extends Block {
     public static final BooleanProperty LIT = RedstoneTorchBlock.LIT;
     public static final DirectionProperty FACING = HorizontalBlock.FACING;
 
-    private static final VoxelShape SHAPE_EAST_WEST = Block.box(7, 0, -4, 8, 15, 20);
-    private static final VoxelShape SHAPE_NORTH_SOUTH = Block.box(-4, 0, 7, 20, 15, 8);
+    private static final VoxelShape SHAPE_EAST_WEST = Block.box(7, 0, -4, 8, 14, 20);
+    private static final VoxelShape SHAPE_NORTH_SOUTH = Block.box(-4, 0, 7, 20, 14, 8);
 
     public TVBlock(Properties properties) {
         super(properties);

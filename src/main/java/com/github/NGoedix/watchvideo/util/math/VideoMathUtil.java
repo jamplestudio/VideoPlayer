@@ -2,6 +2,17 @@ package com.github.NGoedix.watchvideo.util.math;
 
 public class VideoMathUtil {
 
+    public static long floorMod(long x, long y) {
+        try {
+            final long r = x % y;
+            if ((x ^ y) < 0 && r != 0)
+                return r + y;
+            return r;
+        } catch (ArithmeticException e) {
+            return 0;
+        }
+    }
+
     public static float calculateVolume(float volume, float distance, float minDistance, float maxDistance) {
         if (distance <= minDistance) {
             // If the listener is within the minimum distance, the volume stays at the original level.

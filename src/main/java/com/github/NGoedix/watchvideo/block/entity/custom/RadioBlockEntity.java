@@ -4,7 +4,7 @@ import com.github.NGoedix.watchvideo.block.entity.ModBlockEntities;
 import com.github.NGoedix.watchvideo.network.PacketHandler;
 import com.github.NGoedix.watchvideo.network.message.OpenRadioManagerScreen;
 import com.github.NGoedix.watchvideo.network.message.RadioMessage;
-import me.lib720.caprica.vlcj.player.component.CallbackMediaPlayerComponent;
+import com.github.NGoedix.watchvideo.util.displayers.Display;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
@@ -19,7 +19,7 @@ public class RadioBlockEntity extends VideoPlayerBlockEntity {
     private UUID playerUsing;
 
     public RadioBlockEntity() {
-        super(ModBlockEntities.RADIO_BLOCK_ENTITY.get(), true);
+        super(ModBlockEntities.RADIO_BLOCK_ENTITY.get(), Display.DisplayType.MUSIC);
     }
 
     public void tryOpen(World level, BlockPos blockPos, PlayerEntity player) {

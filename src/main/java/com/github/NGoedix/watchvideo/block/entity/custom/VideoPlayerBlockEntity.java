@@ -1,10 +1,9 @@
 package com.github.NGoedix.watchvideo.block.entity.custom;
 
-import com.github.NGoedix.watchvideo.util.cache.TextureCache;
-import com.github.NGoedix.watchvideo.util.config.TVConfig;
-import com.github.NGoedix.watchvideo.util.displayers.IDisplay;
+import com.github.NGoedix.watchvideo.util.displayers.Display;
 import com.github.NGoedix.watchvideo.util.math.geo.Vec3d;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
@@ -14,8 +13,11 @@ import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.registry.Registry;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.watermedia.api.image.ImageAPI;
+import org.watermedia.api.image.ImageCache;
 
 import javax.annotation.Nullable;
+import java.net.URI;
 
 public abstract class VideoPlayerBlockEntity extends TileEntity implements ITickableTileEntity {
 
@@ -27,19 +29,17 @@ public abstract class VideoPlayerBlockEntity extends TileEntity implements ITick
     private int volume = 100;
     private int tick = 0;
 
-    private final boolean loop = true;
+    @OnlyIn(Dist.CLIENT)
+    public Display display;
 
     @OnlyIn(Dist.CLIENT)
-    public IDisplay display;
+    public ImageCache imageCache;
 
-    @OnlyIn(Dist.CLIENT)
-    public TextureCache cache;
+    private final Display.DisplayType displayMode;
 
-    private boolean isOnlyMusic;
-
-    public VideoPlayerBlockEntity(TileEntityType<?> tileEntity, boolean isOnlyMusic) {
+    public VideoPlayerBlockEntity(TileEntityType<?> tileEntity, Display.DisplayType displayMode) {
         super(tileEntity);
-        this.isOnlyMusic = isOnlyMusic;
+        this.displayMode = displayMode;
     }
 
     public boolean isURLEmpty() {
@@ -91,21 +91,33 @@ public abstract class VideoPlayerBlockEntity extends TileEntity implements ITick
         stopped = true;
     }
 
-    public IDisplay requestDisplay() {
-        String url = getUrl();
+    public Display requestDisplay() {
         if (isURLEmpty()) return null;
-        if (cache == null || !cache.url.equals(url)) {
-            cache = TextureCache.get(url);
-            if (display != null)
-                display.release();
-            display = null;
-        }
-        if (!cache.isVideo() && (!cache.ready() || cache.getError() != null))
-            return null;
-        if (display != null)
-            return display;
 
-        return display = cache.createDisplay(new Vec3d(worldPosition), url, volume, TVConfig.MIN_DISTANCE, TVConfig.MAX_DISTANCE, loop, playing, isOnlyMusic);
+        if (imageCache == null || (!isURLEmpty() && !imageCache.uri.equals(URI.create(url)))) {
+            imageCache = ImageAPI.getCache(URI.create(url), Minecraft.getInstance());
+            releaseDisplay();
+        }
+
+        switch (imageCache.getStatus()) {
+            case LOADING:
+            case FAILED:
+            case READY:
+                if (this.display != null) return this.display;
+                return this.display = new Display(this, URI.create(url), displayMode);
+
+            case WAITING:
+                this.releaseDisplay();
+                this.imageCache.load();
+                return this.display;
+
+            case FORGOTTEN:
+                this.imageCache = null;
+                return null;
+
+            default:
+                return null;
+        }
     }
 
     @Nullable
@@ -134,14 +146,12 @@ public abstract class VideoPlayerBlockEntity extends TileEntity implements ITick
 
     @Override
     public void setRemoved() {
-        if (isClient() && display != null)
-            display.release();
+        if (isClient()) releaseDisplay();
     }
 
     @Override
     public void onChunkUnloaded() {
-        if (isClient() && display != null)
-            display.release();
+        if (isClient()) releaseDisplay();
     }
 
     public boolean isClient() {
@@ -181,15 +191,23 @@ public abstract class VideoPlayerBlockEntity extends TileEntity implements ITick
         VideoPlayerBlockEntity be = this;
         if (this.level == null) return;
         if (level.isClientSide) {
-            IDisplay display = be.requestDisplay();
+            Display display = be.requestDisplay();
             if (display != null) {
-                if (stopped)
+                if (stopped) {
                     display.stop();
+                }
                 stopped = false;
-                display.tick(be.url, be.volume, TVConfig.MIN_DISTANCE, TVConfig.MAX_DISTANCE, be.playing, be.loop, isOnlyMusic ? 0 : be.tick);
+                display.tick(be.tick);
             }
         }
         if (be.playing)
             be.tick++;
+    }
+
+    public void releaseDisplay() {
+        if (display != null) {
+            display.release();
+            display = null;
+        }
     }
 }

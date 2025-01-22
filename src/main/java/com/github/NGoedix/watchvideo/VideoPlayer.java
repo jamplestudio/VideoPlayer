@@ -3,7 +3,6 @@ package com.github.NGoedix.watchvideo;
 import com.github.NGoedix.watchvideo.block.ModBlocks;
 import com.github.NGoedix.watchvideo.block.entity.ModBlockEntities;
 import com.github.NGoedix.watchvideo.client.ClientHandler;
-import com.github.NGoedix.watchvideo.client.gui.OverlayVideo;
 import com.github.NGoedix.watchvideo.client.render.TVBlockRenderer;
 import com.github.NGoedix.watchvideo.commands.RegisterCommands;
 import com.github.NGoedix.watchvideo.commands.arguments.SymbolStringArgumentSerializer;
@@ -12,13 +11,7 @@ import com.github.NGoedix.watchvideo.common.CommonHandler;
 import com.github.NGoedix.watchvideo.container.ModContainerTypes;
 import com.github.NGoedix.watchvideo.item.ModItems;
 import com.github.NGoedix.watchvideo.util.RadioStreams;
-import com.github.NGoedix.watchvideo.util.cache.TextureCache;
-import com.github.NGoedix.watchvideo.util.displayers.VideoDisplayer;
-import me.srrapero720.watermedia.api.image.ImageAPI;
-import me.srrapero720.watermedia.api.image.ImageRenderer;
-import me.srrapero720.watermedia.core.tools.JarTool;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
+import com.github.NGoedix.watchvideo.util.displayers.Display;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.command.arguments.ArgumentTypes;
@@ -35,7 +28,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLLoader;
+import org.watermedia.api.image.ImageAPI;
+import org.watermedia.api.image.ImageRenderer;
+import org.watermedia.core.tools.JarTool;
 
 @Mod(Reference.MOD_ID)
 public class VideoPlayer {
@@ -99,34 +94,24 @@ public class VideoPlayer {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public void onRenderGameOverlay(RenderGameOverlayEvent.Post event) {
-        if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
-            ClientHandler.gui.renderOverlay(event.getMatrixStack());
-        }
+//        if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
+//            ClientHandler.gui.renderOverlay(event.getMatrixStack());
+//        }
     }
 
     @Mod.EventBusSubscriber(modid = Reference.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static final class Events {
-
-        @SubscribeEvent
-        public static void onRenderTickEvent(TickEvent.RenderTickEvent event) {
-            if (event.phase == TickEvent.Phase.END) {
-                TextureCache.renderTick();
-            }
-        }
-
         @SubscribeEvent
         public static void onClientTickEvent(TickEvent.ClientTickEvent event) {
             if (event.phase == TickEvent.Phase.END) {
-                TextureCache.clientTick();
-                VideoDisplayer.tick();
+                Display.tick();
             }
         }
 
         @SubscribeEvent
         public static void onUnloadingLevel(WorldEvent.Unload unload) {
             if (unload.getWorld() != null && unload.getWorld().isClientSide()) {
-                TextureCache.unload();
-                VideoDisplayer.unload();
+                Display.unload();
             }
         }
     }

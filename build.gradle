@@ -22,11 +22,11 @@ apply plugin: 'org.parchmentmc.librarian.forgegradle'
 apply plugin: 'maven-publish'
 apply plugin: 'org.spongepowered.mixin'
 
-version = '3.0.5-FORGE-1.16.5'
-group = 'com.github.NGoedix.WatchVideoMod' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+version = '3.1.1-FORGE-1.16.5'
+group = 'com.github.NGoedix.WatchVideoMod'
 archivesBaseName = 'VideoPlayer'
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(8) // Mojang ships Java 8 to end users, so your mod should target Java 8.
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 minecraft {
@@ -42,6 +42,13 @@ minecraft {
                     source sourceSets.main
                 }
             }
+
+            jvmArgs += [
+                    "-Dminecraft.api.auth.host=https://nope.invalid",
+                    "-Dminecraft.api.account.host=https://nope.invalid",
+                    "-Dminecraft.api.session.host=https://nope.invalid",
+                    "-Dminecraft.api.services.host=https://nope.invalid"
+            ]
         }
 
         server {
@@ -76,7 +83,7 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.16.5-36.2.34'
 
     // API
-    implementation 'com.github.WaterMediaTeam.watermedia:build:2.0.69'
+    implementation 'com.github.WaterMediaTeam:watermedia:2.1.12'
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..
