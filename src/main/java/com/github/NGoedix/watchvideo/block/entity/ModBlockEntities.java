@@ -2,7 +2,6 @@ package com.github.NGoedix.watchvideo.block.entity;
 
 import com.github.NGoedix.watchvideo.Reference;
 import com.github.NGoedix.watchvideo.block.ModBlocks;
-import com.github.NGoedix.watchvideo.block.entity.custom.HandRadioBlockEntity;
 import com.github.NGoedix.watchvideo.block.entity.custom.RadioBlockEntity;
 import com.github.NGoedix.watchvideo.block.entity.custom.TVBlockEntity;
 import net.minecraft.tileentity.TileEntityType;

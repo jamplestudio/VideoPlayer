@@ -1,17 +1,8 @@
 package com.github.NGoedix.watchvideo.item;
 
 import com.github.NGoedix.watchvideo.Reference;
-import com.github.NGoedix.watchvideo.VideoPlayer;
-import com.github.NGoedix.watchvideo.VideoPlayerModTab;
-import com.github.NGoedix.watchvideo.block.custom.HandRadioBlock;
-import com.github.NGoedix.watchvideo.item.custom.HandRadioItem;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
 import net.minecraft.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 

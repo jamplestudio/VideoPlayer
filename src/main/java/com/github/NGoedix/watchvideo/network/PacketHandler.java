@@ -1,6 +1,5 @@
 package com.github.NGoedix.watchvideo.network;
 
-import com.github.NGoedix.watchvideo.commands.StopVideoCommand;
 import com.github.NGoedix.watchvideo.network.message.*;
 import com.github.NGoedix.watchvideo.Reference;
 import net.minecraft.entity.LivingEntity;

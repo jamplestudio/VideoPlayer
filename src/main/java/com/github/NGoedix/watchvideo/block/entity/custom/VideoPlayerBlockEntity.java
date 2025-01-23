@@ -1,7 +1,6 @@
 package com.github.NGoedix.watchvideo.block.entity.custom;
 
 import com.github.NGoedix.watchvideo.util.displayers.Display;
-import com.github.NGoedix.watchvideo.util.math.geo.Vec3d;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundNBT;

@@ -2,7 +2,6 @@ package com.github.NGoedix.watchvideo;
 
 import com.github.NGoedix.watchvideo.block.ModBlocks;
 import com.github.NGoedix.watchvideo.block.entity.ModBlockEntities;
-import com.github.NGoedix.watchvideo.client.ClientHandler;
 import com.github.NGoedix.watchvideo.client.render.TVBlockRenderer;
 import com.github.NGoedix.watchvideo.commands.RegisterCommands;
 import com.github.NGoedix.watchvideo.commands.arguments.SymbolStringArgumentSerializer;

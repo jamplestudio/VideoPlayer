@@ -1,9 +1,8 @@
 package com.github.NGoedix.watchvideo.util.math.geo;
 
 public abstract class VecNd<T extends VecNd> {
-    public VecNd() {
 
-    }
+    public VecNd() {}
 
     public abstract void set(T vec);
 

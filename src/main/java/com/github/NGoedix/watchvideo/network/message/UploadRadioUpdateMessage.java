@@ -1,7 +1,6 @@
 package com.github.NGoedix.watchvideo.network.message;
 
 import com.github.NGoedix.watchvideo.block.entity.custom.RadioBlockEntity;
-import com.github.NGoedix.watchvideo.block.entity.custom.TVBlockEntity;
 import com.github.NGoedix.watchvideo.item.custom.HandRadioItem;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;

@@ -1,6 +1,7 @@
 package com.github.NGoedix.watchvideo.util.math;
 
 public class VideoDimensionInfo {
+
     private final int width;
     private final int height;
     private final int offsetX;

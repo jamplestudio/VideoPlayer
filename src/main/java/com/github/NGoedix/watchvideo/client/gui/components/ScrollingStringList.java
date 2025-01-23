@@ -1,6 +1,5 @@
 package com.github.NGoedix.watchvideo.client.gui.components;
 
-
 import com.github.NGoedix.watchvideo.client.gui.components.slider.AbstractSelectionList;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.gui.FontRenderer;

@@ -1,10 +1,10 @@
 package com.github.NGoedix.watchvideo.util.math.geo;
 
-
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.math.vector.Vector3i;
 
 public class Vec3d extends VecNd<Vec3d> {
+
     public double x;
     public double y;
     public double z;
