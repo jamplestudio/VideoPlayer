@@ -6,6 +6,7 @@ import com.github.NGoedix.watchvideo.client.gui.components.CustomSlider;
 import com.github.NGoedix.watchvideo.client.gui.components.ImageButtonHoverable;
 import com.github.NGoedix.watchvideo.network.PacketHandler;
 import com.github.NGoedix.watchvideo.network.message.UploadVideoUpdateMessage;
+import com.github.NGoedix.watchvideo.util.VideoRenderer;
 import com.github.NGoedix.watchvideo.util.displayers.Display;
 import com.github.NGoedix.watchvideo.util.math.VideoDimensionInfo;
 import com.github.NGoedix.watchvideo.util.math.VideoMathUtil;
@@ -13,7 +14,6 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.tileentity.TileEntity;
@@ -22,7 +22,6 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import org.lwjgl.opengl.GL11;
 import org.watermedia.api.image.ImageAPI;
-import org.watermedia.api.image.ImageRenderer;
 import org.watermedia.api.math.MathAPI;
 
 import java.awt.*;
@@ -186,7 +185,6 @@ public class TVVideoScreen extends Screen {
 
         // Draw black square
         GlStateManager._bindTexture(ImageAPI.blackPicture().texture(0));
-
         blit(pPoseStack, leftPos + (imageWidth / 2) - (videoWidth / 2), topPos + 10, videoWidth, videoHeight, 0, 0, videoWidth, videoHeight, videoWidth, videoHeight);
 
         super.render(pPoseStack, pMouseX, pMouseY, pPartialTick);
@@ -230,7 +228,7 @@ public class TVVideoScreen extends Screen {
 
         Display display = be.requestDisplay();
         if (display == null) {
-            renderIcon(pPoseStack, ImageAPI.loadingGif());
+            VideoRenderer.renderTexture(pPoseStack, ImageAPI.loadingGif().texture(be.getTick(), 1, true), 1, 0, 0,width - 36, height - 36, 36, 36);
             return;
         }
 
@@ -238,32 +236,17 @@ public class TVVideoScreen extends Screen {
         if (display.isPlaying() || display.isStopped()) {
             if (display.getDimensions() == null) return; // Checking if video available
 
-            int textureId = display.renderTexture();
-
             RenderSystem.enableBlend();
             fill(pPoseStack, leftPos + (imageWidth / 2) - (videoWidth / 2), topPos + 10, leftPos + (imageWidth / 2) - (videoWidth / 2) + videoWidth, topPos + 10 + videoHeight, MathAPI.argb(255, 0, 0, 0));
-            RenderSystem.disableBlend();
-            RenderSystem.bindTexture(textureId);
 
             // Get dimension and get aspect ratio details
             Dimension videoDimensions = display.getDimensions();
             VideoDimensionInfo info = VideoMathUtil.calculateAspectRatio(videoWidth, videoHeight, (int) videoDimensions.getWidth(), (int) videoDimensions.getHeight());
 
-            RenderSystem.enableBlend();
-            RenderSystem.clearColor(1.0F, 1.0F, 1.0F, 1.0F);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            AbstractGui.blit(pPoseStack, leftPos + (imageWidth / 2) - (videoWidth / 2) + info.getOffsetX(), topPos + 10 + info.getOffsetY(), 0.0F, 0.0F, info.getWidth(), info.getHeight(), info.getWidth(), info.getHeight());
-            RenderSystem.disableBlend();
+            VideoRenderer.renderTexture(pPoseStack, display.renderTexture(), 1, leftPos + (imageWidth / 2) - (videoWidth / 2) + info.getOffsetX(), topPos + 10 + info.getOffsetY(), 0, 0, info.getWidth(), info.getHeight());
         }
-    }
-
-    private void renderIcon(MatrixStack stack, ImageRenderer image) {
-        RenderSystem.enableBlend();
-        RenderSystem.bindTexture(image.texture(be.getTick(), 1, true));
-        AbstractGui.blit(stack, leftPos + (imageWidth / 2) - (videoWidth / 2) + 25, topPos + 10, 0, 0, videoHeight, videoHeight, videoHeight, videoHeight);
-        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        RenderSystem.disableBlend();
     }
 
     @Override

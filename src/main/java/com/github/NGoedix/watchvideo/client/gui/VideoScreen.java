@@ -2,20 +2,18 @@ package com.github.NGoedix.watchvideo.client.gui;
 
 import com.github.NGoedix.watchvideo.Reference;
 import com.github.NGoedix.watchvideo.VideoPlayer;
+import com.github.NGoedix.watchvideo.util.VideoRenderer;
 import com.github.NGoedix.watchvideo.util.math.VideoDimensionInfo;
 import com.github.NGoedix.watchvideo.util.math.VideoMathUtil;
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.loading.FMLLoader;
 import org.lwjgl.opengl.GL11;
 import org.watermedia.api.image.ImageAPI;
-import org.watermedia.api.image.ImageRenderer;
 import org.watermedia.api.math.MathAPI;
 
 import java.awt.*;
@@ -26,6 +24,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class VideoScreen extends Screen {
+
     private static final DateFormat FORMAT = new SimpleDateFormat("HH:mm:ss");
     static {
         FORMAT.setTimeZone(TimeZone.getTimeZone("GMT-00:00"));
@@ -38,7 +37,7 @@ public class VideoScreen extends Screen {
     private float fadeStep10 = 0;
     private float fadeStep5 = 0;
     private boolean started;
-    private boolean closing, finished = false;
+    private boolean closing = false;
     private float volume;
 
     // CONTROL
@@ -81,7 +80,7 @@ public class VideoScreen extends Screen {
         Reference.LOGGER.info("Playing video (" + (!controlBlocked ? "not" : "") + "blocked) (" + url + " with volume: " + (int) (minecraft.options.getSoundSourceVolume(SoundCategory.MASTER) * volume));
 
         player.setVolume((int) (minecraft.options.getSoundSourceVolume(SoundCategory.MASTER) * volume));
-        if (!fadeIn) {
+        if (!fadeIn && player.isSafeUse()) {
             started = true;
             player.start(URI.create(url));
         } else {
@@ -98,7 +97,7 @@ public class VideoScreen extends Screen {
         // Handle easing for fade-in
         if ((tick < optionInSecs * 20 && optionInMode != -1) || !started) {
             float t = tick / (float) (optionInSecs * 20);
-            fadeLevel = (float) applyEasing(optionInMode, 0, 1, t);
+            fadeLevel = (float) VideoRenderer.applyEasing(optionInMode, 0, 1, t);
             if (!started && fadeLevel >= 1.0) {
                 if (player.isSafeUse())
                     player.play();
@@ -118,7 +117,7 @@ public class VideoScreen extends Screen {
                 closing = true;
                 if (closingOnTick == -1) closingOnTick = tick + optionOutSecs * 20;
                 float t = (tick - closingOnTick + optionOutSecs * 20) / (float)(optionOutSecs * 20);
-                fadeLevel = (float) applyEasing(optionOutMode, 1, 0, t);
+                fadeLevel = (float) VideoRenderer.applyEasing(optionOutMode, 1, 0, t);
                 renderBlackBackground(stack);
                 if (fadeLevel == 0) onClose();
                 return;
@@ -145,9 +144,9 @@ public class VideoScreen extends Screen {
         // RENDER GIF
         if (!player.isPlaying() || !player.isPlaying()) {
             if (player.isPaused() && player.isPaused()) {
-                renderIcon(stack, VideoPlayer.pausedImage());
+                VideoRenderer.renderTexture(stack, VideoPlayer.pausedImage().texture(tick, 1, true), 1, 0, 0, width - 36, height - 36, 36, 36);
             } else {
-                renderIcon(stack, ImageAPI.loadingGif());
+                VideoRenderer.renderTexture(stack, ImageAPI.loadingGif().texture(tick, 1, true), 1, 0, 0,width - 36, height - 36, 36, 36);
             }
         }
 
@@ -158,9 +157,9 @@ public class VideoScreen extends Screen {
         // DEBUG RENDERING
         if (!FMLLoader.isProduction()) {
             if (!player.isReady()) return;
-            draw(stack, String.format("State: %s", player.raw().mediaPlayer().media().info().state().toString()), getHeightCenter(-12));
-            draw(stack, String.format("Time: %s (%s) / %s (%s)", FORMAT.format(new Date(player.getTime())), player.getTime(), FORMAT.format(new Date(player.getDuration())), player.getDuration()), getHeightCenter(0));
-            draw(stack, String.format("Media Duration: %s (%s)", FORMAT.format(new Date(player.getMediaInfoDuration())), player.getMediaInfoDuration()), getHeightCenter(12));
+            VideoRenderer.drawString(stack, String.format("State: %s", player.raw().mediaPlayer().media().info().state().toString()), VideoMathUtil.getHeightCenter(height, -12));
+            VideoRenderer.drawString(stack, String.format("Time: %s (%s) / %s (%s)", FORMAT.format(new Date(player.getTime())), player.getTime(), FORMAT.format(new Date(player.getDuration())), player.getDuration()), VideoMathUtil.getHeightCenter(height, 0));
+            VideoRenderer.drawString(stack, String.format("Media Duration: %s (%s)", FORMAT.format(new Date(player.getMediaInfoDuration())), player.getMediaInfoDuration()), VideoMathUtil.getHeightCenter(height, 12));
         }
     }
 
@@ -175,63 +174,26 @@ public class VideoScreen extends Screen {
 
         RenderSystem.enableBlend();
         fill(stack, 0, 0, width, height, MathAPI.argb(255, 0, 0, 0));
-        RenderSystem.disableBlend();
-
-        RenderSystem.bindTexture(texture);
 
         // Get video dimensions
         Dimension videoDimensions = player.dimension();
         VideoDimensionInfo info = VideoMathUtil.calculateAspectRatio(width, height, (int) videoDimensions.getWidth(), (int) videoDimensions.getHeight());
 
-        RenderSystem.enableBlend();
-        RenderSystem.clearColor(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-        AbstractGui.blit(stack, info.getOffsetX(), info.getOffsetY(), 0.0F, 0.0F, info.getWidth(), info.getHeight(), info.getWidth(), info.getHeight());
-        RenderSystem.disableBlend();
-    }
-
-    private void renderIcon(MatrixStack stack, ImageRenderer image) {
-        RenderSystem.enableBlend();
-        RenderSystem.bindTexture(image.texture(tick, 1, true));
-        AbstractGui.blit(stack, width - 36, height - 36 , 0, 0, 36, 36, 28, 28);
-        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        RenderSystem.disableBlend();
+        VideoRenderer.renderTexture(stack, texture, 1, info.getOffsetX(), info.getOffsetY(), 0, 0, info.getWidth(), info.getHeight());
     }
 
     private void renderStepIcon(MatrixStack stack, float pPartialTicks, boolean forward) {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.bindTexture(forward ? VideoPlayer.step10Image().texture(tick, 1, true) : VideoPlayer.step5Image().texture(tick, 1, true));
+        int texture = forward ? VideoPlayer.step10Image().texture(tick, 1, true) : VideoPlayer.step5Image().texture(tick, 1, true);
         float alpha = forward ? fadeStep10 : fadeStep5;
-        RenderSystem.color4f(1.0f, 1.0f, 1.0f, alpha);
-        AbstractGui.blit(stack, width / 2 + (forward ? 70 : -134), height / 2 - 32, 0, 0, 64, 64, 64, 64);
+        VideoRenderer.renderTexture(stack, texture, alpha, width / 2 + (forward ? 70 : -134), height / 2 - 32, 0, 0, 64, 64);
+
         if (forward) {
             fadeStep10 = Math.max(fadeStep10 - (pPartialTicks / 8), 0.0f);
         } else {
             fadeStep5 = Math.max(fadeStep5 - (pPartialTicks / 8), 0.0f);
         }
-        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        RenderSystem.disableBlend();
-    }
-
-    private double applyEasing(int mode, double start, double end, double t) {
-        switch (mode) {
-            case 0:
-                return VideoMathUtil.easeIn(start, end, t);
-            case 1:
-                return VideoMathUtil.easeOut(start, end, t);
-            default:
-                return end;
-        }
-    }
-
-    private int getHeightCenter(int offset) {
-        return (height / 2) + offset;
-    }
-
-    private void draw(MatrixStack stack, String text, int height) {
-        drawString(stack, Minecraft.getInstance().font, text, 5, height, 0xffffff);
     }
 
     @Override
@@ -318,12 +280,11 @@ public class VideoScreen extends Screen {
             player.stop();
             player.release();
             Minecraft.getInstance().getSoundManager().resume();
-            finished = true;
         }
     }
 
     public boolean isFinished() {
-        return finished;
+        return !started;
     }
 
     @Override

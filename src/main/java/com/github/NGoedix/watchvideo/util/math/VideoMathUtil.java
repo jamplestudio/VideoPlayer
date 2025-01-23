@@ -2,6 +2,10 @@ package com.github.NGoedix.watchvideo.util.math;
 
 public class VideoMathUtil {
 
+    public static int getHeightCenter(int height, int offset) {
+        return (height / 2) + offset;
+    }
+
     public static VideoDimensionInfo calculateAspectRatio(int containerWidth, int containerHeight, int videoWidth, int videoHeight) {
         float containerAspectRatio = (float) containerWidth / (float) containerHeight;
         float videoAspectRatio = (float) videoWidth / (float) videoHeight;
