@@ -5,6 +5,7 @@ import com.github.NGoedix.videoplayer.block.entity.ModBlockEntities;
 import com.github.NGoedix.videoplayer.commands.*;
 import com.github.NGoedix.videoplayer.commands.arguments.SymbolStringArgumentSerializer;
 import com.github.NGoedix.videoplayer.commands.arguments.SymbolStringArgumentType;
+import com.github.NGoedix.videoplayer.jample.VideoExecution;
 import com.github.NGoedix.videoplayer.network.PacketHandler;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;

@@ -8,6 +8,7 @@ import com.github.NGoedix.videoplayer.client.gui.RadioScreen;
 import com.github.NGoedix.videoplayer.client.gui.TVVideoScreen;
 import com.github.NGoedix.videoplayer.client.gui.VideoScreen;
 import com.github.NGoedix.videoplayer.client.render.TVBlockRenderer;
+import com.github.NGoedix.videoplayer.jample.VideoExecution;
 import com.github.NGoedix.videoplayer.network.PacketHandler;
 import com.github.NGoedix.videoplayer.Reference;
 import com.github.NGoedix.videoplayer.util.RadioStreams;
@@ -51,7 +52,7 @@ public class ClientHandler implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        Reference.LOGGER.info("Initializing Client");
+        Reference.LOGGER.info("============================================== Initializing Client");
 
         if (VideoPlayerUtils.isInstalled("mr_stellarity", "stellarity")) {
             throw new VideoPlayerUtils.UnsupportedModException("mr_stellarity (Stellarity)", "breaks picture rendering, overwrites Minecraft core shaders and isn't possible work around that");
@@ -65,6 +66,8 @@ public class ClientHandler implements ClientModInitializer {
         IMG_PAUSED = ImageAPI.renderer(JarTool.readImage("/pictures/paused.png"), true);
         IMG_STEP10 = ImageAPI.renderer(JarTool.readImage("/pictures/step10.png"), true);
         IMG_STEP5 = ImageAPI.renderer(JarTool.readImage("/pictures/step5.png"), true);
+
+        // VideoExecution.initClient();
     }
 
     public static void openVideo(Minecraft client, String url, int volume, boolean isControlBlocked, boolean canSkip) {
