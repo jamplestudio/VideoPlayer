@@ -71,5 +71,4 @@ jar {
 	from("LICENSE") {
 		rename { "${it}_${base.archivesName.get()}"}
 	}
-	setArchiveFileName("JamVideoPlayer")
 }
