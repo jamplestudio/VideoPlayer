@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "id": "videoplayer",
+  "id": "jamvideoplayer",
   "version": "${version}",
 
-  "name": "Video Player",
+  "name": "Jam Video Player",
   "description": "Play videos in Minecraft!",
   "authors": [
-    "Goedix (NGoedix)"
+    "Goedix (NGoedix), Lede"
   ],
   "contact": {
     "discord": "https://discord.gg/8jjK7tK4ZD",
