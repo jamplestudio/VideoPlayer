@@ -23,6 +23,13 @@ public class RemoteVideoExecution {
                 ClientHandler.openVideo(Minecraft.getInstance(), packet.url(), packet.volume(), packet.isControlBlocked(), packet.canSkip());
             });
         });
+
+        ClientPlayNetworking.registerGlobalReceiver(new ResourceLocation("jamvideo", "remote_stop"), (client, handler, buf, responseSender) -> {
+            client.execute(() -> {
+                System.out.println("Remote Video Stopped.");
+                ClientHandler.stopVideoIfExists(Minecraft.getInstance());
+            });
+        });
     }
 
 }
