@@ -15,6 +15,7 @@ import com.github.NGoedix.videoplayer.util.RadioStreams;
 import me.srrapero720.watermedia.api.image.ImageAPI;
 import me.srrapero720.watermedia.api.image.ImageRenderer;
 import me.srrapero720.watermedia.api.player.SyncMusicPlayer;
+import me.srrapero720.watermedia.api.player.SyncVideoPlayer;
 import me.srrapero720.watermedia.core.tools.JarTool;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
@@ -26,6 +27,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Environment(EnvType.CLIENT)
 public class ClientHandler implements ClientModInitializer {
@@ -68,6 +72,23 @@ public class ClientHandler implements ClientModInitializer {
         IMG_STEP5 = ImageAPI.renderer(JarTool.readImage("/pictures/step5.png"), true);
 
         RemoteVideoExecution.initClient();
+    }
+
+    public static void openVideo(Minecraft client, String url, int volume, boolean isControlBlocked, boolean canSkip, Runnable onFinish) {
+        client.execute(() -> {
+            VideoScreen video = new VideoScreen(url, volume, isControlBlocked, canSkip, false);
+            Minecraft.getInstance().setScreen(video);
+
+            SyncVideoPlayer player = video.getSyncVideoPlayer();
+            ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+            service.scheduleAtFixedRate(() -> {
+                if (!player.isPlaying()) {
+                    stopVideoIfExists(client);
+                    onFinish.run();
+                    service.shutdown();
+                }
+            }, 0, 500, TimeUnit.MILLISECONDS);
+        });
     }
 
     public static void openVideo(Minecraft client, String url, int volume, boolean isControlBlocked, boolean canSkip) {

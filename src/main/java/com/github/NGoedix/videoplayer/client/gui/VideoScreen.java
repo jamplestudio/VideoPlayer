@@ -94,6 +94,10 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
         }
     }
 
+    public @NotNull SyncVideoPlayer getSyncVideoPlayer() {
+        return player;
+    }
+
     @Override
     protected void renderLabels(@NotNull GuiGraphics pPoseguiGraphics, int pMouseX, int pMouseY) {}
 
