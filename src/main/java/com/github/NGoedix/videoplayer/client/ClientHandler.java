@@ -82,10 +82,11 @@ public class ClientHandler implements ClientModInitializer {
             SyncVideoPlayer player = video.getSyncVideoPlayer();
             ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
             service.scheduleAtFixedRate(() -> {
-                if (!player.isPlaying()) {
+                if (player.isEnded()) {
                     stopVideoIfExists(client);
                     onFinish.run();
                     service.shutdown();
+                    System.out.println("Video Ended.");
                 }
             }, 0, 500, TimeUnit.MILLISECONDS);
         });
