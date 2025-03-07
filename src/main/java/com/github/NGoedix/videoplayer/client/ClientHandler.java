@@ -79,14 +79,14 @@ public class ClientHandler implements ClientModInitializer {
             VideoScreen video = new VideoScreen(url, volume, isControlBlocked, canSkip, false);
             Minecraft.getInstance().setScreen(video);
 
-            SyncVideoPlayer player = video.getSyncVideoPlayer();
-            ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-            service.scheduleAtFixedRate(() -> {
-                if (player.isEnded()) {
+            ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+            executor.scheduleAtFixedRate(() -> {
+                System.out.println("Wait for Finish Video");
+                if (video.isFinished()) {
                     stopVideoIfExists(client);
                     onFinish.run();
-                    service.shutdown();
-                    System.out.println("Video Ended.");
+                    executor.shutdown();
+                    System.out.println("Video Finished.");
                 }
             }, 0, 500, TimeUnit.MILLISECONDS);
         });

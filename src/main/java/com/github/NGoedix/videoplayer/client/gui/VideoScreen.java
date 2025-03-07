@@ -98,6 +98,10 @@ public class VideoScreen extends AbstractContainerScreen<AbstractContainerMenu> 
         return player;
     }
 
+    public boolean isFinished() {
+        return closing || player.isEnded() || player.isBroken();
+    }
+
     @Override
     protected void renderLabels(@NotNull GuiGraphics pPoseguiGraphics, int pMouseX, int pMouseY) {}
 
