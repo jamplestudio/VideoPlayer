@@ -10,6 +10,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
+
 
 public class RemoteVideoExecution {
 
@@ -28,8 +30,9 @@ public class RemoteVideoExecution {
                 ClientHandler.openVideo(Minecraft.getInstance(), packet.url(), packet.volume(), packet.isControlBlocked(), packet.canSkip(), () -> {
                     // 영상 재생 완료 시 서버로 콜백
                     FriendlyByteBuf responseBuf = PacketByteBufs.create();
-                    responseBuf.writeInt(json.length());
-                    responseBuf.writeUtf(json);
+                    byte[] message = json.getBytes(StandardCharsets.UTF_8);
+                    responseBuf.writeInt(message.length);
+                    responseBuf.writeBytes(message);
                     ClientPlayNetworking.send(IDENTITY_EXECUTE, responseBuf);
                 });
             });

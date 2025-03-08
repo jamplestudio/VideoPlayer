@@ -74,14 +74,19 @@ public class ClientHandler implements ClientModInitializer {
         RemoteVideoExecution.initClient();
     }
 
+    private static ScheduledExecutorService executor;
+
     public static void openVideo(Minecraft client, String url, int volume, boolean isControlBlocked, boolean canSkip, Runnable onFinish) {
         client.execute(() -> {
             VideoScreen video = new VideoScreen(url, volume, isControlBlocked, canSkip, false);
             Minecraft.getInstance().setScreen(video);
 
-            ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+            if (executor != null) {
+                executor.shutdownNow();
+            }
+
+            executor = Executors.newSingleThreadScheduledExecutor();
             executor.scheduleAtFixedRate(() -> {
-                System.out.println("Wait for Finish Video");
                 if (video.isFinished()) {
                     stopVideoIfExists(client);
                     onFinish.run();
